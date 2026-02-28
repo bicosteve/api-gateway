@@ -1,4 +1,4 @@
-CREATE TABLE `profile_settings` (
+CREATE TABLE IF NOT EXISTS `profile_settings` (
     `id` BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
     `status` VARCHAR(50) NOT NULL,
     `is_verified` INTEGER UNSIGNED DEFAULT 0,
@@ -9,3 +9,5 @@ CREATE TABLE `profile_settings` (
      FOREIGN KEY (`profile_id`)
      REFERENCES `profile`(`profile_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE INDEX IF NOT EXISTS idx_profile_settings ON profile_settings (status, is_verified, is_deleted,profile_id);

@@ -1,4 +1,4 @@
-CREATE TABLE `profile` (
+CREATE TABLE IF NOT EXISTS `profile` (
     `profile_id` BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     `phone_number` VARCHAR(20) NOT NULL UNIQUE,
     `password_hash` VARCHAR(255) NOT NULL,
@@ -6,4 +6,4 @@ CREATE TABLE `profile` (
     `modified_at`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE INDEX idx_profile_phone ON profile (profile_id, phone_number);
+CREATE INDEX IF NOT EXISTS idx_profile_phone ON profile (profile_id, phone_number);
