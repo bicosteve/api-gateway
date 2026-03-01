@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS `profile_settings` (
      KEY `idx_settings_status_verified_profile` (`status`, `is_verified`, `profile_id`),
      CONSTRAINT `fk_profile_settings_profile`
      FOREIGN KEY (`profile_id`)
-     REFERENCES `profile`(`profile_id`) ON DELETE CASCADE
+     REFERENCES `profileDto`(`profile_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE INDEX IF NOT EXISTS idx_profile_settings ON profile_settings (status, is_verified, is_deleted,profile_id);

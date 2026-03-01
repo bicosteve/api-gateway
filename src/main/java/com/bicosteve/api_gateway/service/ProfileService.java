@@ -1,7 +1,8 @@
 package com.bicosteve.api_gateway.service;
 
 import com.bicosteve.api_gateway.dto.requests.RegisterRequest;
-import com.bicosteve.api_gateway.dto.response.Profile;
+import com.bicosteve.api_gateway.dto.response.ProfileDto;
+import com.bicosteve.api_gateway.exceptions.ProfileNotFoundException;
 import com.bicosteve.api_gateway.repository.JdbcProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,8 +20,10 @@ public class ProfileService {
     * @return Optional containing the profile found or empty if not
     * */
 
-    public Optional<Profile> getProfileById(Long id){
-        return this.profileRepository.findById(id);
+    public ProfileDto getProfileById(Long id){
+        return this.profileRepository.
+                findById(id).
+                orElseThrow(() -> new ProfileNotFoundException(id));
     }
 
     /*
@@ -28,7 +31,8 @@ public class ProfileService {
      * @param RegisterRequest which has the phone_number to search
      * @return Optional containing the profile found or empty if not
      * */
-    public Optional<Profile> getProfileByEmail(RegisterRequest request){
+
+    public Optional<ProfileDto> getProfileByEmail(RegisterRequest request){
         return this.profileRepository.findByPhoneNumber(request.getPhoneNumber());
     }
 
