@@ -1,6 +1,7 @@
 package com.bicosteve.api_gateway.service;
 
 import com.bicosteve.api_gateway.dto.requests.RegisterRequest;
+import com.bicosteve.api_gateway.dto.requests.VerifyRequest;
 import com.bicosteve.api_gateway.dto.response.ProfileDto;
 import com.bicosteve.api_gateway.exceptions.ProfileNotFoundException;
 import com.bicosteve.api_gateway.repository.JdbcProfileRepository;
@@ -32,8 +33,27 @@ public class ProfileService {
      * @return Optional containing the profile found or empty if not
      * */
 
-    public Optional<ProfileDto> getProfileByEmail(RegisterRequest request){
+    public Optional<ProfileDto> getProfileByPhoneNumber(RegisterRequest request){
         return this.profileRepository.findByPhoneNumber(request.getPhoneNumber());
     }
+
+
+    /*
+     * CreateProfile
+     * @param RegisterRequest which has the phone_number and password to insert
+     * */
+    public void createProfile(RegisterRequest request){
+        this.profileRepository.insertProfile(request);
+    }
+
+    /*
+     * CreateProfile
+     * @param RegisterRequest which has the phone_number and password to insert
+     * */
+    public void verifyProfile(VerifyRequest request){
+        this.profileRepository.updateProfileStatus(1L, 1L, 1L);
+    }
+
+
 
 }
