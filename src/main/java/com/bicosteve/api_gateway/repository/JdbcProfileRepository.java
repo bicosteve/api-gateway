@@ -17,6 +17,8 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -24,6 +26,7 @@ import java.util.Optional;
 public class JdbcProfileRepository {
     private final JdbcTemplate jdbcTemplate;
     private final ProfileMapper profileMapper;
+    private final LocalDateTime now = LocalDateTime.now();
 
 
     public Optional<ProfileDto> findById(Long id){
@@ -61,8 +64,12 @@ public class JdbcProfileRepository {
     public void insertProfile(RegisterRequest request){
         try{
             // 01. Insert profile and get generated profile_id
-            String query = "INSERT INTO profile(phone_number, password_hash) VALUES (?,?)";
+            String query = """
+                        INSERT INTO profile(phone_number, password_hash, created_at, modified_at) 
+                            VALUES (?,?,?,?)
+                    """;
             KeyHolder keyHolder = new GeneratedKeyHolder();
+
 
             this.jdbcTemplate.update(connection -> {
                 PreparedStatement ps = connection.prepareStatement(
@@ -71,28 +78,32 @@ public class JdbcProfileRepository {
                 );
                 ps.setString(1, request.getPhoneNumber());
                 ps.setString(2, request.getPassword());
+                ps.setTimestamp(3, Timestamp.valueOf(this.now));
+                ps.setTimestamp(4, Timestamp.valueOf(this.now));
                 return ps;
                     }, keyHolder);
 
             // 02. Get the generated id to insert into profile_settings
-            Long profileId = keyHolder.getKey().longValue();
+            Long profileId = (Long) keyHolder.getKeys().get("profile_id");
 
             // 03. Insert into the profile_settings
             String q = """
-                        INSERT INTO profile_settings(status, is_verified, is_deleted, profile_id) 
-                        VALUES (?, ?, ?, ?)
+                        INSERT INTO profile_settings(status, is_verified, is_deleted, profile_id, created_at, modified_at) 
+                        VALUES (?, ?, ?, ?, ?, ?)
                     """;
 
-            this.jdbcTemplate.update(q, 0, 0, 0, profileId);
+            this.jdbcTemplate.update(q, 0, 0, 0, profileId, Timestamp.valueOf(this.now),Timestamp.valueOf(this.now));
 
         }catch(DataAccessException ex){
+            ex.printStackTrace();
             throw new ProfileCreationException(request.getPhoneNumber());
         }
     }
 
-    public void updateProfileStatus(Long status, Long isVerified, Long profileId){
+    public void updateProfileStatus(int status, int isVerified, Long profileId){
         String query = """
-                    UPDATE profile_settings SET status = ?, is_verified = ? 
+                    UPDATE profile_settings 
+                    SET status = ?, is_verified = ? , modified_at = ?
                     WHERE profile_id = ?
                 """;
 
@@ -101,6 +112,7 @@ public class JdbcProfileRepository {
                     query,
                     status,
                     isVerified,
+                    this.now,
                     profileId
             );
         } catch(DataAccessException e) {

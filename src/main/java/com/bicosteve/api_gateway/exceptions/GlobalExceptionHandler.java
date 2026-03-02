@@ -64,7 +64,21 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String,String>> handleAccountVerificationErrors(
             VerifyAccountException ex)
     {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("messsage",ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message",ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidOtpException.class)
+    public ResponseEntity<Map<String,String>> handlesInvalidOtp(
+            InvalidOtpException ex)
+    {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message",ex.getMessage()));
+    }
+
+    @ExceptionHandler(OtpExpiredException.class)
+    public ResponseEntity<Map<String,String>> handlesInvalidOtp(
+            OtpExpiredException ex)
+    {
+        return ResponseEntity.status(HttpStatus.GONE).body(Map.of("message",ex.getMessage()));
     }
 
 
