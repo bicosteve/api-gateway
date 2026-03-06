@@ -1,8 +1,10 @@
 package com.bicosteve.api_gateway.controller;
 
+import com.bicosteve.api_gateway.dto.requests.LoginRequest;
 import com.bicosteve.api_gateway.dto.requests.RegisterRequest;
 import com.bicosteve.api_gateway.dto.requests.VerifyRequest;
 import com.bicosteve.api_gateway.service.ProfileService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,7 @@ import java.util.Map;
 @RequestMapping("/auth")
 public class AuthControllers {
     private final ProfileService profileService;
+    private final HttpServletResponse response;
 
 
     @PostMapping("/register")
@@ -36,7 +39,10 @@ public class AuthControllers {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String,String>> loginUser(){
-        return ResponseEntity.status(HttpStatus.OK).body(Map.of("message","token"));
+    public ResponseEntity<Map<String,String>> loginUser(
+            @Valid @RequestBody LoginRequest request
+            ){
+        Map<String,String> tokens = this.profileService.generateLoginToken(request,this.response);
+        return ResponseEntity.status(HttpStatus.OK).body(tokens);
     }
 }

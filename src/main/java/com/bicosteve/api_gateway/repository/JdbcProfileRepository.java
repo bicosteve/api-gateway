@@ -2,6 +2,8 @@ package com.bicosteve.api_gateway.repository;
 
 import com.bicosteve.api_gateway.dto.requests.RegisterRequest;
 import com.bicosteve.api_gateway.dto.response.ProfileDto;
+import com.bicosteve.api_gateway.dto.response.ProfileSettingsDto;
+import com.bicosteve.api_gateway.exceptions.PhoneNumberNotFoundException;
 import com.bicosteve.api_gateway.exceptions.ProfileCreationException;
 import com.bicosteve.api_gateway.exceptions.VerifyAccountException;
 import com.bicosteve.api_gateway.mappers.ProfileMapper;
@@ -10,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
@@ -34,7 +35,6 @@ public class JdbcProfileRepository {
        try{
            ProfileDto profileDto =  this.jdbcTemplate
                    .queryForObject(query, this.profileMapper::toDto, id);
-
            return Optional.ofNullable(profileDto);
        } catch(EmptyResultDataAccessException e) {
            return Optional.empty();
@@ -42,7 +42,15 @@ public class JdbcProfileRepository {
     }
 
     public Optional<ProfileDto> findByPhoneNumber(String phoneNumber){
-        String query = "SELECT profile_id, phone_number FROM profile WHERE phone_number = ?";
+        String query = """
+                    SELECT p.profile_id, p.phone_number,p.password_hash,
+                        ps.status, ps.is_verified, ps.is_deleted, ps.profile_id
+                    AS settings_id
+                    FROM profile p
+                    LEFT JOIN profile_settings ps
+                        ON p.profile_id = ps.profile_id
+                    WHERE p.phone_number = ?
+                """;
         try{
             ProfileDto profileDto = this.jdbcTemplate.queryForObject(
                     query,
@@ -50,13 +58,26 @@ public class JdbcProfileRepository {
                         ProfileDto p = new ProfileDto();
                         p.setProfileId(rs.getLong("profile_id"));
                         p.setPhoneNumber(rs.getString("phone_number"));
+                        p.setPassword(rs.getString("password_hash"));
+
+                        // Check if the settings exist before creating the object
+                        if(rs.getObject("settings_id") != null){
+                            ProfileSettingsDto ps = new ProfileSettingsDto();
+                            ps.setStatus(rs.getInt("status"));
+                            ps.setIsVerified(rs.getInt("is_verified"));
+                            ps.setIsDeleted(rs.getInt("is_deleted"));
+
+                            p.setProfileSettings(ps);
+                        } else {
+                            p.setProfileSettings(null);
+                        }
+
                         return p;
                     }, phoneNumber
             );
-
             return Optional.ofNullable(profileDto);
         } catch(EmptyResultDataAccessException e) {
-            return Optional.empty(); // no data found
+            return Optional.empty();
         }
     }
 
@@ -65,8 +86,7 @@ public class JdbcProfileRepository {
         try{
             // 01. Insert profile and get generated profile_id
             String query = """
-                        INSERT INTO profile(phone_number, password_hash, created_at, modified_at) 
-                            VALUES (?,?,?,?)
+                        INSERT INTO profile(phone_number, password_hash, created_at, modified_at) VALUES (?,?,?,?)
                     """;
             KeyHolder keyHolder = new GeneratedKeyHolder();
 
@@ -88,22 +108,23 @@ public class JdbcProfileRepository {
 
             // 03. Insert into the profile_settings
             String q = """
-                        INSERT INTO profile_settings(status, is_verified, is_deleted, profile_id, created_at, modified_at) 
+                        INSERT INTO
+                         profile_settings(status, is_verified, is_deleted, profile_id, created_at, modified_at)
                         VALUES (?, ?, ?, ?, ?, ?)
                     """;
 
             this.jdbcTemplate.update(q, 0, 0, 0, profileId, Timestamp.valueOf(this.now),Timestamp.valueOf(this.now));
 
         }catch(DataAccessException ex){
-            ex.printStackTrace();
+            // ex.printStackTrace(); // replace with logs
             throw new ProfileCreationException(request.getPhoneNumber());
         }
     }
 
     public void updateProfileStatus(int status, int isVerified, Long profileId){
         String query = """
-                    UPDATE profile_settings 
-                    SET status = ?, is_verified = ? , modified_at = ?
+                    UPDATE profile_settings
+                     SET status = ?, is_verified = ? , modified_at = ?
                     WHERE profile_id = ?
                 """;
 

@@ -4,7 +4,7 @@ import com.bicosteve.api_gateway.exceptions.InvalidOtpException;
 import com.bicosteve.api_gateway.exceptions.OtpExpiredException;
 import com.bicosteve.api_gateway.utils.AppUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
@@ -12,12 +12,12 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class OtpService {
-    private final StringRedisTemplate redisTemplate;
+    private final RedisTemplate<String,String> redisStringTemplate; // use RedisConfig method
     private static final int OTP_EXPIRY_HOURS = 5;
 
     public String generateAndStoreOtp(String phoneNumber){
         String otp = AppUtils.generateOTP();
-        this.redisTemplate.opsForValue().set(
+        this.redisStringTemplate.opsForValue().set(
                 "otp:%s".formatted(phoneNumber),
                 otp,
                 OTP_EXPIRY_HOURS,
@@ -28,7 +28,7 @@ public class OtpService {
     }
 
     public boolean verifyOtp(String phoneNumber, String otp){
-        String storedOtp = this.redisTemplate.opsForValue().get("otp:%s".formatted(phoneNumber));
+        String storedOtp = this.redisStringTemplate.opsForValue().get("otp:%s".formatted(phoneNumber));
         if(storedOtp == null){
             throw new OtpExpiredException("OTP does not exist");
         }
@@ -37,7 +37,7 @@ public class OtpService {
             throw new InvalidOtpException("Invalid otp");
         }
 
-        this.redisTemplate.delete("otp:%s".formatted(phoneNumber));
+        this.redisStringTemplate.delete("otp:%s".formatted(phoneNumber));
 
         return true;
     }

@@ -33,9 +33,12 @@ spring:
     hibernate:
       ddl-auto: none
     show-sql: true
-#    properties:
-#      hibernate:
-#        format_sql: true
+
+  jwt:
+    secret: 7d8fG2pL9mX4qR6vY3bN1zJ5kS8wA0dT
+    access-token-expiration: 3600
+    refresh-token-expiration: 604800
+
 
 server:
   port: 5001

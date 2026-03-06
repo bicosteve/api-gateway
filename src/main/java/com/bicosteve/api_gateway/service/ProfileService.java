@@ -1,5 +1,6 @@
 package com.bicosteve.api_gateway.service;
 
+import com.bicosteve.api_gateway.dto.requests.LoginRequest;
 import com.bicosteve.api_gateway.dto.requests.RegisterRequest;
 import com.bicosteve.api_gateway.dto.requests.VerifyRequest;
 import com.bicosteve.api_gateway.dto.response.ProfileDto;
@@ -8,9 +9,16 @@ import com.bicosteve.api_gateway.exceptions.PhoneNumberExistsException;
 import com.bicosteve.api_gateway.exceptions.PhoneNumberNotFoundException;
 import com.bicosteve.api_gateway.exceptions.ProfileNotFoundException;
 import com.bicosteve.api_gateway.repository.JdbcProfileRepository;
+import com.bicosteve.api_gateway.security.JwtConfig;
+import com.bicosteve.api_gateway.security.JwtService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -21,6 +29,10 @@ import java.util.Optional;
 public class ProfileService {
     private final JdbcProfileRepository profileRepository;
     private final OtpService otpService;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
+    private final JwtConfig jwtConfig;
+    private final PasswordEncoder passwordEncoder;
 
     /*
     * Find profile by its ID
@@ -48,11 +60,19 @@ public class ProfileService {
      * @param RegisterRequest which has the phone_number and password to insert
      * */
     public Map<String,String> createProfile(RegisterRequest request){
-        this.getProfileByPhoneNumber(request).ifPresent(profile -> {
+        Optional<ProfileDto> profile = this.getProfileByPhoneNumber(request);
+        if(profile.isPresent()){
             throw new PhoneNumberExistsException(request.getPhoneNumber());
-        });
-        this.profileRepository.insertProfile(request);
+        }
+
         String otp = this.otpService.generateAndStoreOtp(request.getPhoneNumber());
+
+        // Hash password
+        String hashedPassword = this.passwordEncoder.encode(request.getPassword());
+        request.setPassword(hashedPassword);
+
+        this.profileRepository.insertProfile(request);
+
         return Map.of(
                 "message","Registration success",
                 "verification_code",otp
@@ -64,19 +84,56 @@ public class ProfileService {
      * @param RegisterRequest which has the phone_number and password to insert
      * */
     public Map<String,String> verifyProfile(VerifyRequest request){
-        var profile = this.profileRepository.findByPhoneNumber(request.getPhoneNumber());
-        if(profile.isEmpty()){
-            throw new PhoneNumberNotFoundException("Profile with %s number does not exist".formatted(request.getPhoneNumber()));
-        }
+        ProfileDto profile = this.profileRepository.
+                findByPhoneNumber(request.getPhoneNumber())
+                .orElseThrow(() -> new PhoneNumberNotFoundException("Profile with %s number does not exist".formatted(request.getPhoneNumber())));
 
-        boolean isValid = this.otpService.verifyOtp(request.getPhoneNumber(), request.getVerificationCode());
+        boolean isValid = this.otpService
+                .verifyOtp(request.getPhoneNumber(), request.getVerificationCode());
         if(!isValid){
             throw new InvalidOtpException("Provided otp %s is invalid".formatted(request.getVerificationCode()));
         }
 
-        this.profileRepository.updateProfileStatus(1, 1, profile.get().getProfileId());
+        this.profileRepository.updateProfileStatus(1, 1, profile.getProfileId());
 
         return Map.of("msg","account verified");
+    }
+
+    /*
+    * @generateLoginToken
+    * @param LoginRequest
+    * @param HttpServletResponse
+    * */
+    public Map<String, String> generateLoginToken(
+            LoginRequest request,
+            HttpServletResponse response
+    ){
+        // 01. Authenticate credentials
+        this.authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getPhoneNumber(),
+                        request.getPassword()
+                )
+        );
+
+        // 02. Get profile from db
+        ProfileDto profile = this.profileRepository.
+                findByPhoneNumber(request.getPhoneNumber())
+                .orElseThrow(() -> new PhoneNumberNotFoundException(request.getPhoneNumber()));
+
+        // 03. Generate tokens
+        String accessToken = this.jwtService.generateAccessToken(profile);
+        String refreshToken = this.jwtService.generateRefreshToken(profile);
+
+        // 04. Store refresh token in HttpOnly cookie
+        Cookie cookie = new Cookie("refreshToken", refreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/aut/refresh");
+        cookie.setMaxAge(this.jwtConfig.getRefreshTokenExpiration());
+        cookie.setSecure(false); // TODO -> Set to true in prod
+        response.addCookie(cookie);
+
+        return Map.of("access_token",accessToken, "refresh_token",refreshToken);
     }
 
 
