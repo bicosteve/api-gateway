@@ -14,8 +14,6 @@ import com.bicosteve.api_gateway.security.JwtService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -60,19 +58,24 @@ public class ProfileService {
      * @param RegisterRequest which has the phone_number and password to insert
      * */
     public Map<String,String> createProfile(RegisterRequest request){
+        // 01. Check if the phone number exists in DB.
+        // Throw error if exists to avoid duplicate registration.
         Optional<ProfileDto> profile = this.getProfileByPhoneNumber(request);
         if(profile.isPresent()){
             throw new PhoneNumberExistsException(request.getPhoneNumber());
         }
 
+        // 02. Generate an OTP for verification
         String otp = this.otpService.generateAndStoreOtp(request.getPhoneNumber());
 
-        // Hash password
+        // 03. Hash the password
         String hashedPassword = this.passwordEncoder.encode(request.getPassword());
         request.setPassword(hashedPassword);
 
+        // 04. Insert the packaged user
         this.profileRepository.insertProfile(request);
 
+        // 05. Return a map of message of success and otp
         return Map.of(
                 "message","Registration success",
                 "verification_code",otp
@@ -89,7 +92,11 @@ public class ProfileService {
                 .orElseThrow(() -> new PhoneNumberNotFoundException("Profile with %s number does not exist".formatted(request.getPhoneNumber())));
 
         boolean isValid = this.otpService
-                .verifyOtp(request.getPhoneNumber(), request.getVerificationCode());
+                .verifyOtp(
+                        request.getPhoneNumber(),
+                        request.getVerificationCode()
+                );
+
         if(!isValid){
             throw new InvalidOtpException("Provided otp %s is invalid".formatted(request.getVerificationCode()));
         }
@@ -104,22 +111,19 @@ public class ProfileService {
     * @param LoginRequest
     * @param HttpServletResponse
     * */
-    public Map<String, String> generateLoginToken(
-            LoginRequest request,
-            HttpServletResponse response
-    ){
-        // 01. Authenticate credentials
+    public Map<String, String> generateLoginToken(LoginRequest request, HttpServletResponse response){
+        // 01. Check if the profile exists in the db
+        ProfileDto profile = this.profileRepository.findByPhoneNumber(request.getPhoneNumber())
+                .orElseThrow(() -> new PhoneNumberNotFoundException(request.getPhoneNumber()));
+
+
+        // 02. Authenticate credentials (now we know user exists)
         this.authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getPhoneNumber(),
                         request.getPassword()
                 )
         );
-
-        // 02. Get profile from db
-        ProfileDto profile = this.profileRepository.
-                findByPhoneNumber(request.getPhoneNumber())
-                .orElseThrow(() -> new PhoneNumberNotFoundException(request.getPhoneNumber()));
 
         // 03. Generate tokens
         String accessToken = this.jwtService.generateAccessToken(profile);

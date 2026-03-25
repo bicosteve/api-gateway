@@ -3,47 +3,47 @@ spring:
     name: api-gateway
 
   datasource:
-    url: jdbc:h2:mem:testdb;MODE=MySQL;DATABASE_TO_LOWER=TRUE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: ${DB_DRIVER}
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-      settings:
-        web-allow-others: false
-        trace: false
+#  h2:
+#    console:
+#      enabled: true
+#      path: /h2-console
+#      settings:
+#        web-allow-others: false
+#        trace: false
 
   sql:
     init:
-      mode: always
-      schema-locations: classpath:schema.sql # runs 1st
-      data-locations: classpath:data.sql # runs 2nd
-      platform: h2
+      mode: ${SQL_MODE}
+      schema-locations: classpath:schema.sql # runs 1st to create tables
+      # data-locations: classpath:data.sql # runs 2nd
+      # platform: h2
 
-  jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
-    hibernate:
-      ddl-auto: none
-    show-sql: true
+#  jpa:
+#    database-platform: org.hibernate.dialect.H2Dialect
+#    hibernate:
+#      ddl-auto: none
+#    show-sql: true
 
   jwt:
-    secret: 7d8fG2pL9mX4qR6vY3bN1zJ5kS8wA0dT
-    access-token-expiration: 3600
-    refresh-token-expiration: 604800
+    secret: ${JWT_SECRET}
+    access-token-expiration: ${ACCESS_TOKEN_EXPIRATION}
+    refresh-token-expiration: ${REFRESH_TOKEN_EXPIRATION}
 
 
 server:
-  port: 5001
+  port: ${APP_PORT}
 
 logging:
   level:
-    org.springframework.jdbc: DEBUG
+    org.springframework.jdbc: ${LOGGING_LEVEL}
 
