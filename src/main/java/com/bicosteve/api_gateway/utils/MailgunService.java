@@ -18,9 +18,13 @@ public class MailgunService{
 
     @Async("asyncMailSender")
     public void sendEmail(MailRequest mail){
+        String url = "%s/%s/messages".formatted(
+                this.mailgunConfig.getBaseUrl(),
+                this.mailgunConfig.getSandbox()
+        );
 
         log.info("MailgunService::sending mail to {}",mail.getTo());
-        String url = this.mailgunConfig.getBaseUrl() + "/%s/messages".formatted(this.mailgunConfig.getSandbox());
+        log.info("MailgunService::Sending request to url {}",url);
 
         try{
             HttpResponse<String> response = Unirest
