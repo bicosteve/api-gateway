@@ -47,3 +47,10 @@ logging:
   level:
     org.springframework.jdbc: ${LOGGING_LEVEL}
 
+mailgun:
+  api-key: ${MAILGUN_API_KEY}
+  base-url: ${MAILGUN_BASE_URL}
+  sandbox: ${MAILGUN_SANDBOX}
+  from: ${MAILGUN_FROM}
+
+

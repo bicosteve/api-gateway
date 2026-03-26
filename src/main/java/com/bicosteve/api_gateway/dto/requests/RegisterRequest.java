@@ -17,6 +17,10 @@ public class RegisterRequest {
     @JsonProperty("phone_number")
     private String phoneNumber;
 
+    @NotBlank(message = "Email is required")
+    @JsonProperty("email")
+    private String email;
+
     @NotBlank(message = "Password is required")
     @Size(min = 1, message = "Must be greater than 1 character")
     @JsonProperty("password")

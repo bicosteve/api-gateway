@@ -1,8 +1,7 @@
-package com.bicosteve.api_gateway.service;
+package com.bicosteve.api_gateway.utils;
 
 import com.bicosteve.api_gateway.exceptions.InvalidOtpException;
 import com.bicosteve.api_gateway.exceptions.OtpExpiredException;
-import com.bicosteve.api_gateway.utils.AppUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;

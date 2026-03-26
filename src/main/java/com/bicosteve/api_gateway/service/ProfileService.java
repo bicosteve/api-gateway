@@ -1,6 +1,7 @@
 package com.bicosteve.api_gateway.service;
 
 import com.bicosteve.api_gateway.dto.requests.LoginRequest;
+import com.bicosteve.api_gateway.dto.requests.MailRequest;
 import com.bicosteve.api_gateway.dto.requests.RegisterRequest;
 import com.bicosteve.api_gateway.dto.requests.VerifyRequest;
 import com.bicosteve.api_gateway.dto.response.ProfileDto;
@@ -11,9 +12,12 @@ import com.bicosteve.api_gateway.exceptions.ProfileNotFoundException;
 import com.bicosteve.api_gateway.repository.JdbcProfileRepository;
 import com.bicosteve.api_gateway.security.JwtConfig;
 import com.bicosteve.api_gateway.security.JwtService;
+import com.bicosteve.api_gateway.utils.MailgunService;
+import com.bicosteve.api_gateway.utils.OtpService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,6 +28,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProfileService {
     private final JdbcProfileRepository profileRepository;
     private final OtpService otpService;
@@ -31,6 +36,7 @@ public class ProfileService {
     private final JwtService jwtService;
     private final JwtConfig jwtConfig;
     private final PasswordEncoder passwordEncoder;
+    private final MailgunService mailgunService;
 
     /*
     * Find profile by its ID
@@ -75,7 +81,23 @@ public class ProfileService {
         // 04. Insert the packaged user
         this.profileRepository.insertProfile(request);
 
-        // 05. Return a map of message of success and otp
+        // 05. Send mail with the otp
+        MailRequest mail = MailRequest.builder()
+                .to(request.getEmail())
+                .subject("Account verification")
+                .body("Verification token " + otp)
+                .purpose("Registration OTP")
+                .build();
+
+        this.mailgunService.sendEmail(mail);
+
+        // 06. Return a map of message of success and otp
+
+        log.info(
+                "ProfileService::Verification OTP sent to {} email",
+                request.getPhoneNumber()
+        );
+
         return Map.of(
                 "message","Registration success",
                 "verification_code",otp
@@ -89,7 +111,9 @@ public class ProfileService {
     public Map<String,String> verifyProfile(VerifyRequest request){
         ProfileDto profile = this.profileRepository.
                 findByPhoneNumber(request.getPhoneNumber())
-                .orElseThrow(() -> new PhoneNumberNotFoundException("Profile with %s number does not exist".formatted(request.getPhoneNumber())));
+                .orElseThrow(() -> new PhoneNumberNotFoundException(
+                        "Profile with %s number does not exist".formatted(request.getPhoneNumber()))
+                );
 
         boolean isValid = this.otpService
                 .verifyOtp(
