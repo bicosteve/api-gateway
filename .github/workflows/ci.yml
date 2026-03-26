@@ -1,0 +1,32 @@
+name: Api Gateway CI
+
+on:
+    push:
+        branches:
+          - main
+          - dev
+          - "feat/*"
+          - "fix/*"
+
+
+    pull_request:
+       branches:
+         - dev
+         - main
+
+jobs:
+     build:
+         runs-on: ubuntu-latest
+
+         steps:
+           # STEP 1: Checkout repository
+           - name: Checkout code
+             uses: actions/checkout@v4
+
+          # STEP 2: Set up JDK
+           - name: Set up JDK
+             uses: actions/setup-java@v4
+             with:
+               java-version: "21"
+               distribution: "openjdk"
+               cache: maven
