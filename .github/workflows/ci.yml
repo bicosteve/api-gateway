@@ -16,29 +16,79 @@ on:
 
 jobs:
      build:
-         runs-on: ubuntu-latest
+       runs-on: ubuntu-latest
 
-         steps:
-           # STEP 1: Checkout repository
-           - name: Checkout code
-             uses: actions/checkout@v6
+         # Spin MySQL & Redis services from docker
+       services:
+         mysql:
+           image: mysql:8.0
+           env:
+             MYSQL_ROOT_PASSWORD: root
+             MYSQL_DATABASE: sportsbook
+           ports:
+             - 3306:3306
+           options: >-
+             --health-cmd="mysqladmin ping" 
+             --health-interval=10s 
+             --health-timeout=5s 
+             --health-retries=3
 
-          # STEP 2: Set up JDK
-           - name: Set up JDK 21
-             uses: actions/setup-java@v5
-             with:
-               java-version: "21"
-               distribution: "temurin"
+         redis:
+           image: redis:7.0
+           ports:
+             - 6379:6379
+           options: >-
+             --health-cmd="redis-cli ping"
+             --health-inteval=10s
+             --health-timeout=5s
+             --health-retries=3
+             
 
-          # STEP 3: Download & cache maven dependencies
-           - name: Download & Cache Maven dependencies
-             uses: actions/cache@v5
-             with:
-               path: ~/.m2/repository
-               key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-               restore-keys: |
-                 ${{ runner.os }}-maven-
 
-          # STEP 6: Build the app to confirm everything is OK.
-           - name: Build with Maven
-             run: mvn -B package --file pom.xml
+       steps:
+         # STEP 1: Checkout repository
+         - name: Checkout code
+           uses: actions/checkout@v6
+
+        # STEP 2: Set up JDK
+         - name: Set up JDK 21
+           uses: actions/setup-java@v5
+           with:
+             java-version: "21"
+             distribution: "temurin"
+
+        # STEP 3: Download & cache maven dependencies
+         - name: Download & Cache Maven dependencies
+           uses: actions/cache@v5
+           with:
+             path: ~/.m2/repository
+             key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+             restore-keys: |
+               ${{ runner.os }}-maven-
+
+        # STEP 6: Build the app to confirm everything is OK.
+         - name: Build with Maven
+           run: mvn -B package --file pom.xml
+           env:
+             DB_URL: jdbc:mysql://127.0.0.1:3306/sportsbook
+             DB_USERNAME: root
+             DB_PASSWORD: root
+             DB_DRIVER: com.mysql.cj.jdbc.Driver
+             SQL_MODE: always
+             LOGGING_LEVEL: DEBUG
+
+             REDIS_HOST: 127.0.0.1
+             REDIS_PORT: 6379
+
+             ACCESS_TOKEN_EXPIRATION: 3600
+             REFRESH_TOKEN_EXPIRATION: 604800
+
+
+             APP_PORT: ${{ secrets.APP_PORT }}
+             JWT_SECRET: ${{ secrets.JWT_SECRET }}
+             MAILGUN_BASE_URL: ${{ secrets.MAILGUN_BASE_URL }}
+             MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
+             MAILGUN_SANDBOX: ${{ secrets.MAILGUN_SANDBOX }}
+             MAILGUN_FROM: ${{ secrets.MAILGUN_FROM }}
+
+
