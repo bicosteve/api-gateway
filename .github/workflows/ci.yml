@@ -29,11 +29,15 @@ jobs:
              with:
                java-version: "21"
                distribution: "temurin"
-               cache: maven
 
-          # STEP 3: Download maven dependencies
-           - name: Download Maven dependencies
-             uses: mvn dependency:go-offline -B
+          # STEP 3: Download & cache maven dependencies
+           - name: Download & Cache Maven dependencies
+             uses: actions/cache@v5
+             with:
+               path: ~/.m2
+               key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+               restore-keys:
+                 ${{ runner.os }}-maven-
 
           # STEP 6: Build the app to confirm everything is OK.
            - name: Build with Maven
