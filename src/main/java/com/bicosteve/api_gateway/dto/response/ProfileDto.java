@@ -12,9 +12,6 @@ import java.util.Date;
 public class ProfileDto {
     private Long profileId;
     private String phoneNumber;
-    private String password;
-    private Date createdAt;
-    private Date modifiedAt;
 
     private ProfileSettingsDto profileSettings;
 }
