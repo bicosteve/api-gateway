@@ -11,7 +11,7 @@ import com.bicosteve.api_gateway.exceptions.PhoneNumberNotFoundException;
 import com.bicosteve.api_gateway.exceptions.ProfileNotFoundException;
 import com.bicosteve.api_gateway.mappers.dtomappers.ProfileDtoMapper;
 import com.bicosteve.api_gateway.models.Profile;
-import com.bicosteve.api_gateway.repository.JdbcProfileRepository;
+import com.bicosteve.api_gateway.repository.ProfileRepository;
 import com.bicosteve.api_gateway.security.JwtConfig;
 import com.bicosteve.api_gateway.security.JwtService;
 import com.bicosteve.api_gateway.utils.MailgunService;
@@ -31,7 +31,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 public class ProfileService {
-    private final JdbcProfileRepository profileRepository;
+    private final ProfileRepository profileRepository;
     private final OtpService otpService;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;

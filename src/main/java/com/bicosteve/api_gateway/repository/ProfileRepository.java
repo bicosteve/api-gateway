@@ -23,7 +23,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Repository
 @Slf4j
-public class JdbcProfileRepository {
+public class ProfileRepository{
     private final JdbcTemplate jdbcTemplate;
     private final ProfileRowMapper profileRowMapper;
     private final LocalDateTime timeNow = LocalDateTime.now();

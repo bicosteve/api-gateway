@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -24,4 +25,8 @@ public class Event{
     private Integer         eventStatus;
     private LocalDateTime   createdAt;
     private LocalDateTime   updateAt;
+
+    private Score           score;
+    private List<Team>      teams;
+    private List<Market>    markets;
 }
