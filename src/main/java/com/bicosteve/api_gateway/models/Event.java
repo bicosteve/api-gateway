@@ -26,7 +26,7 @@ public class Event{
     private LocalDateTime   createdAt;
     private LocalDateTime   updateAt;
 
-    private Score           score;
     private List<Team>      teams;
     private List<Market>    markets;
+    private Score           score;
 }
