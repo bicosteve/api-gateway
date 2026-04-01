@@ -13,6 +13,9 @@ import java.time.LocalDateTime;
 
 @Component
 public class ProfileRowMapper implements RowMapper<Profile>{
+    // Has mapRow method which assists in mapping the ResultSet inside the
+    // ProfileRepository class
+    // Hides the tedious column-to-field mapping
 
     @Override
     public Profile mapRow(ResultSet rs, int rowNum) throws SQLException{
