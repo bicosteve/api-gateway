@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 public class Price{
     private Integer         priceId;
-    private String          rundownId;
+    private Integer         rundownId;
     private BigDecimal      price;
     private BigDecimal      priceDelta;
     private Integer         isMainLine;

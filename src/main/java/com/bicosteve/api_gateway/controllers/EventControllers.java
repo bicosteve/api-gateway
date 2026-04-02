@@ -1,6 +1,7 @@
 package com.bicosteve.api_gateway.controllers;
 
 
+import com.bicosteve.api_gateway.dto.response.EventDto;
 import com.bicosteve.api_gateway.models.Event;
 import com.bicosteve.api_gateway.service.EventService;
 import lombok.RequiredArgsConstructor;
@@ -22,13 +23,13 @@ public class EventControllers{
     private final EventService eventService;
 
     @GetMapping("/all")
-    public ResponseEntity<Map<String, List<Event>>> showAllEvents(
+    public ResponseEntity<Map<String, List<EventDto>>> showAllEvents(
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam(defaultValue = "0") int offset){
 
         var events = this.eventService.getEvents(limit,offset);
 
-        Map<String, List<Event>> allEvents = Map.of("events",events);
+        Map<String, List<EventDto>> allEvents = Map.of("events",events);
 
         return  ResponseEntity.status(HttpStatus.OK).body(allEvents);
     }

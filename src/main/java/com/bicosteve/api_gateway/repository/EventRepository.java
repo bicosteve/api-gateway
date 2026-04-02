@@ -184,7 +184,7 @@ public class EventRepository{
 
                     // Getting prices
                     Integer priceId = rs.getInt("price_id");
-                    String priceRundownId = rs.getString("price_rundown_id");
+                    Integer priceRundownId = rs.getInt("price_rundown_id");
                     BigDecimal price = rs.getBigDecimal("price");
                     Integer isMainLine = rs.getInt("is_main_line");
                     BigDecimal priceOdd = rs.getBigDecimal("odds");
