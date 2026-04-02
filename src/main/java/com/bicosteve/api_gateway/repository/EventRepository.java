@@ -278,11 +278,11 @@ public class EventRepository{
                 int isAway = rs.getInt("is_away");
                 String teamsLeague = rs.getString("league_name");
 
-                if(teamsId != 0){
+                if(teamId != null && teamId != 0){
 
                     boolean exists = event.getTeams()
                             .stream()
-                            .anyMatch(team -> team.getId().equals(teamsId));
+                            .anyMatch(team -> team.getTeamId().equals(teamId));
 
                     // Avoids the duplicate of teams in the teams list
                     if(!exists){

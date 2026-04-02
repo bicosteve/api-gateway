@@ -3,12 +3,16 @@ package com.bicosteve.api_gateway.mappers.dtomappers;
 
 import com.bicosteve.api_gateway.dto.response.*;
 import com.bicosteve.api_gateway.models.Event;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
+@Slf4j
 public class EventDtoMapper{
+
     public EventDto toDto(Event event){
         if(event == null) return null;
 
@@ -23,9 +27,10 @@ public class EventDtoMapper{
         dto.setEventName(event.getEventName());
         dto.setEventStatus(event.getEventStatus());
 
+
         // 02. Check and set teams for an event
-        if(event.getTeams() != null && !event.getTeams().isEmpty()){
-            List<TeamDto> teamDtos = event.getTeams().stream()
+        if(event.getTeams() != null){
+            List<TeamDto> teamsDto = event.getTeams().stream()
                     .map(team -> {
                         TeamDto teamDto = new TeamDto();
                         teamDto.setId(team.getId());
@@ -38,12 +43,12 @@ public class EventDtoMapper{
                         return teamDto;
                     }).toList();
 
-            dto.setTeams(teamDtos);
+            dto.setTeams(teamsDto);
         }
 
         // 03. Check and set markets for an event
-        if(event.getMarkets() != null && !event.getMarkets().isEmpty()){
-            List<MarketDto> marketDtos = event.getMarkets().stream()
+        if(event.getMarkets() != null){
+            List<MarketDto> marketsDto = event.getMarkets().stream()
                     .map(market -> {
                         MarketDto marketDto = new MarketDto();
 
@@ -54,10 +59,9 @@ public class EventDtoMapper{
 
 
                         // 04. Check and set participants for market
-                        if(market.getParticipants() != null && !market.getParticipants().isEmpty()){
-                            List<ParticipantDto> participantDtos = market.getParticipants().stream()
+                        if(market.getParticipants() != null){
+                            List<ParticipantDto> participantsDto = market.getParticipants().stream()
                                     .map(participant -> {
-
                                         ParticipantDto participantDto = new ParticipantDto();
 
                                         participantDto.setParticipantId(participant.getParticipantId());
@@ -67,8 +71,8 @@ public class EventDtoMapper{
                                         participantDto.setMarketId(participant.getMarketId());
 
                                         // 05. Check & set prices for participants
-                                        if(participant.getPrices() != null && !participant.getPrices().isEmpty()){
-                                            List<PriceDto> priceDtos = participant.getPrices().stream()
+                                        if(participant.getPrices() != null){
+                                            List<PriceDto> pricesDto = participant.getPrices().stream()
                                                     .map( price -> {
 
                                                         PriceDto priceDto = new PriceDto();
@@ -85,7 +89,7 @@ public class EventDtoMapper{
 
                                                     }).toList();
 
-                                            participantDto.setPrices(priceDtos);
+                                            participantDto.setPrices(pricesDto);
 
                                         }
 
@@ -95,7 +99,7 @@ public class EventDtoMapper{
                                     }).toList();
 
 
-                            marketDto.setParticipants(participantDtos);
+                            marketDto.setParticipants(participantsDto);
                         }
 
                         return marketDto;
@@ -103,7 +107,7 @@ public class EventDtoMapper{
 
                     }).toList();
 
-            dto.setMarkets(marketDtos);
+            dto.setMarkets(marketsDto);
         }
 
         // 06. Check & set scores for the event
