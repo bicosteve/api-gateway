@@ -3,6 +3,7 @@ package com.bicosteve.api_gateway.mappers.dtomappers;
 
 import com.bicosteve.api_gateway.dto.response.*;
 import com.bicosteve.api_gateway.models.Event;
+import com.bicosteve.api_gateway.models.Price;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -69,29 +70,23 @@ public class EventDtoMapper{
                                         participantDto.setName(participant.getName());
                                         participantDto.setMarketId(participant.getMarketId());
 
-                                        // 05. Check & set prices for participants
+                                        // 05. Check & set price for participants
                                         if(participant.getPrices() != null){
-                                            List<PriceDto> pricesDto = participant.getPrices().stream()
-                                                    .map( price -> {
 
-                                                        PriceDto priceDto = new PriceDto();
+                                            Price price = participant.getPrices().get(0);
 
-                                                        priceDto.setPriceId(price.getPriceId());
-                                                        priceDto.setRundownId(price.getRundownId());
-                                                        priceDto.setOdds(price.getOdds());
-                                                        priceDto.setParticipantId(price.getParticipantId());
-                                                        priceDto.setHandicapValue(price.getHandicapValue());
-                                                        priceDto.setLineId(price.getLineId());
-                                                        priceDto.setClosedAt(price.getClosedAt());
+                                            PriceDto priceDto = new PriceDto();
+                                            priceDto.setPriceId(price.getPriceId());
+                                            priceDto.setRundownId(price.getRundownId());
+                                            priceDto.setOdds(price.getOdds());
+                                            priceDto.setParticipantId(price.getParticipantId());
+                                            priceDto.setHandicapValue(price.getHandicapValue());
+                                            priceDto.setLineId(price.getLineId());
+                                            priceDto.setClosedAt(price.getClosedAt());
 
-                                                        return priceDto;
-
-                                                    }).toList();
-
-                                            participantDto.setPrices(pricesDto);
+                                            participantDto.setPrices(List.of(priceDto));
 
                                         }
-
 
                                         return participantDto;
 

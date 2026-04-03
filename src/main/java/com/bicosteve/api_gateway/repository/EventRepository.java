@@ -278,7 +278,7 @@ public class EventRepository{
                 int isAway = rs.getInt("is_away");
                 String teamsLeague = rs.getString("league_name");
 
-                if(teamId != null && teamId != 0){
+                if(teamId != 0){
 
                     boolean exists = event.getTeams()
                             .stream()
@@ -301,9 +301,7 @@ public class EventRepository{
                     }
                 }
             }
-
-            log.info("EventRepository::Events {} ",eventMap);
-
+            
             return new ArrayList<>(eventMap.values());
         }
     }

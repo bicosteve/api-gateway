@@ -19,7 +19,6 @@ public class EventService{
 
     public List<EventDto> getEvents(int limit, int offset){
         List<Event> events = this.eventRepository.fetchEvents(limit,offset);
-        log.info("EventService::events {} ",events);
         return events.stream()
                 .map(this.eventDtoMapper::toDto)
                 .toList();
