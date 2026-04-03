@@ -6,7 +6,6 @@ import com.bicosteve.api_gateway.models.Event;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
