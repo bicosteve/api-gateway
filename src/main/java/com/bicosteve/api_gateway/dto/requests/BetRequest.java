@@ -34,4 +34,17 @@ public class BetRequest{
 
     @Size(min=1,max = 10, message = "selections must be between 1 and 10")
     private List<SlipRequest> slips;
+
+    public void calculateTotalOdds(){
+        if(this.slips != null && !this.slips.isEmpty()){
+            double product = 1.0;
+            for(SlipRequest slip : this.slips){
+                if(slip.getOdds() != null){
+                    product *= slip.getOdds();
+                }
+            }
+            
+            this.totalOdds = product;
+        }
+    }
 }
