@@ -30,7 +30,7 @@ public class BetRequest{
 
     @NotBlank(message = "isBonus is required")
     @JsonProperty("is_bonus")
-    private Boolean isBonus;
+    private Integer isBonus;
 
     @Size(min=1,max = 10, message = "selections must be between 1 and 10")
     private List<SlipRequest> slips;
@@ -43,7 +43,7 @@ public class BetRequest{
                     product *= slip.getOdds();
                 }
             }
-            
+
             this.totalOdds = product;
         }
     }

@@ -28,7 +28,6 @@ CREATE TABLE IF NOT EXISTS profile_settings(
 
 CREATE TABLE IF NOT EXISTS bets(
     bet_id          BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    event_id        VARCHAR(255) NOT NULL,
     profile_id      BIGINT UNSIGNED NOT NULL,
     stake           DECIMAL(12,2) NOT NULL,
     is_bonus        TINYINT NOT NULL DEFAULT 0,
@@ -38,7 +37,6 @@ CREATE TABLE IF NOT EXISTS bets(
     created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX           idx_bet_id(bet_id),
-    INDEX           idx_event_id(event_id),
     INDEX           idx_profile_id(profile_id),
     INDEX           idx_status(status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -57,7 +55,6 @@ CREATE TABLE IF NOT EXISTS bet_slips(
     created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at          DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (bet_id) REFERENCES bets(bet_id),
-    FOREIGN KEY (event_id) REFERENCES bets(event_id),
     INDEX               idx_bet_slip_id(bet_slip_id),
     INDEX               idx_bet_id_bet_slips(bet_id),
     INDEX               idx_sport_id(sport_id),
