@@ -1,11 +1,10 @@
 package com.bicosteve.api_gateway.repository;
 
 import com.bicosteve.api_gateway.dto.requests.RegisterRequest;
-import com.bicosteve.api_gateway.dto.response.ProfileDto;
-import com.bicosteve.api_gateway.dto.response.ProfileSettingsDto;
 import com.bicosteve.api_gateway.exceptions.ProfileCreationException;
 import com.bicosteve.api_gateway.exceptions.VerifyAccountException;
-import com.bicosteve.api_gateway.mappers.ProfileMapper;
+import com.bicosteve.api_gateway.mappers.rowmappers.ProfileRowMapper;
+import com.bicosteve.api_gateway.models.Profile;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,33 +23,43 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Repository
 @Slf4j
-public class JdbcProfileRepository {
+public class ProfileRepository{
     private final JdbcTemplate jdbcTemplate;
-    private final ProfileMapper profileMapper;
-    private final LocalDateTime now = LocalDateTime.now();
+    private final ProfileRowMapper profileRowMapper;
+    private final LocalDateTime timeNow = LocalDateTime.now();
 
 
-    public Optional<ProfileDto> findById(Long id){
+    public Optional<Profile> findById(Long id){
         String query = "SELECT * FROM profile WHERE profile_id = ?";
        try{
-           ProfileDto profileDto =  this.jdbcTemplate
-                   .queryForObject(query, this.profileMapper::toDto, id);
-           return Optional.ofNullable(profileDto);
+           Profile profile = this.jdbcTemplate.queryForObject(
+                   query,
+                   this.profileRowMapper,
+                   id
+           );
+
+           return Optional.ofNullable(profile);
        } catch(EmptyResultDataAccessException e) {
            log.info("ProfileRepository::no profile found for {}",id);
            return Optional.empty();
        }
     }
 
-    public Optional<ProfileDto> findByPhoneNumber(String phoneNumber){
+    public Optional<Profile> findByPhoneNumber(String phoneNumber){
         String query = """
                     SELECT
                         p.profile_id,
                         p.phone_number,
                         p.password_hash,
+                        p.created_at,
+                        p.modified_at,
+                        ps.id AS settings_id,
                         ps.status,
                         ps.is_verified,
-                        ps.is_deleted
+                        ps.is_deleted,
+                        ps.profile_id AS settings_profile_id,
+                        ps.created_at AS settings_created_at,
+                        ps.modified_at AS settings_modified_at
                     FROM profile p
                     LEFT JOIN profile_settings ps
                         ON p.profile_id = ps.profile_id
@@ -58,35 +67,28 @@ public class JdbcProfileRepository {
                     LIMIT 1
                 """;
         try{
-            ProfileDto profileDto = this.jdbcTemplate.queryForObject(
+            Profile profile = this.jdbcTemplate.queryForObject(
                     query,
-                    (rs,rowNum)-> {
-                        ProfileDto p = new ProfileDto();
-                        p.setProfileId(rs.getLong("profile_id"));
-                        p.setPhoneNumber(rs.getString("phone_number"));
-                        p.setPassword(rs.getString("password_hash"));
-
-                        // Check if the settings exist before creating the object
-                        if(rs.getObject("settings_id") != null){
-                            ProfileSettingsDto ps = new ProfileSettingsDto();
-                            ps.setStatus(rs.getInt("status"));
-                            ps.setIsVerified(rs.getInt("is_verified"));
-                            ps.setIsDeleted(rs.getInt("is_deleted"));
-
-                            p.setProfileSettings(ps);
-                        } else {
-                            p.setProfileSettings(null);
-                        }
-
-                        return p;
-                    }, phoneNumber
+                    this.profileRowMapper,
+                    phoneNumber
             );
-            return Optional.ofNullable(profileDto);
+
+            log.info("ProfileRepository::profile data {}",profile);
+
+            return Optional.ofNullable(profile);
+
         } catch(EmptyResultDataAccessException e) {
             log.info("ProfileRepository::No profile found for {}",phoneNumber);
             return Optional.empty();
         }
     }
+
+    public boolean existsByPhoneNumber(String phoneNumber){
+        String sql = "SELECT COUNT(*) FROM profile WHERE phone_number = ?";
+        Integer count = this.jdbcTemplate.queryForObject(sql,Integer.class,phoneNumber);
+        return count != null && count > 0;
+    }
+
 
     @Transactional
     public void insertProfile(RegisterRequest request){
@@ -106,8 +108,8 @@ public class JdbcProfileRepository {
 
                 ps.setString(1, request.getPhoneNumber());
                 ps.setString(2, request.getPassword());
-                ps.setTimestamp(3, Timestamp.valueOf(this.now));
-                ps.setTimestamp(4, Timestamp.valueOf(this.now));
+                ps.setTimestamp(3, Timestamp.valueOf(this.timeNow));
+                ps.setTimestamp(4, Timestamp.valueOf(this.timeNow));
 
                 return ps;
 
@@ -132,7 +134,7 @@ public class JdbcProfileRepository {
                         VALUES (?, ?, ?, ?, ?, ?)
                     """;
 
-            this.jdbcTemplate.update(q, 0, 0, 0, profileId, Timestamp.valueOf(this.now),Timestamp.valueOf(this.now));
+            this.jdbcTemplate.update(q, 0, 0, 0, profileId, Timestamp.valueOf(this.timeNow),Timestamp.valueOf(this.timeNow));
 
         }catch(DataAccessException ex){
             log.warn("ProfileRepository::Error {} getting profile",ex.getMessage());
@@ -157,7 +159,7 @@ public class JdbcProfileRepository {
                     query,
                     status,
                     isVerified,
-                    this.now,
+                    this.timeNow,
                     profileId
             );
         } catch(DataAccessException e) {

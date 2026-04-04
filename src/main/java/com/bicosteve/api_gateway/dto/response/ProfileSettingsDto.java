@@ -10,5 +10,4 @@ import lombok.NoArgsConstructor;
 public class ProfileSettingsDto {
     private Integer status;
     private Integer isVerified;
-    private Integer isDeleted;
 }

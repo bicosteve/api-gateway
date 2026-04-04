@@ -1,4 +1,4 @@
-package com.bicosteve.api_gateway.controller;
+package com.bicosteve.api_gateway.controllers;
 
 import com.bicosteve.api_gateway.config.AppConfig;
 import com.bicosteve.api_gateway.dto.requests.LoginRequest;
@@ -18,7 +18,7 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @Slf4j
 public class AuthControllers {
     private final ProfileService profileService;

@@ -7,88 +7,174 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private String getCurrentTimestamp(){
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"));
+    }
+
     // 404 - ProfileNotFound
     @ExceptionHandler(ProfileNotFoundException.class)
-    public ResponseEntity<Map<String,String>> handleProfileNotFound(
+    public ResponseEntity<ErrorResponse> handleProfileNotFound(
             ProfileNotFoundException ex
     ){
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error",ex.getMessage()));
+        // construct error message
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                this.getCurrentTimestamp(),
+                null
+        );
+
+        return new ResponseEntity<>(error,HttpStatus.NOT_FOUND);
     }
 
     // 404 - PhoneNumberNotFound
     @ExceptionHandler(PhoneNumberNotFoundException.class)
-    public ResponseEntity<Map<String,String>> handlePhoneNumberNotFound(
+    public ResponseEntity<ErrorResponse> handlePhoneNumberNotFound(
             PhoneNumberNotFoundException ex
     ){
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error",ex.getMessage()));
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                this.getCurrentTimestamp(),
+                null
+        );
+        return new ResponseEntity <>(error,HttpStatus.NOT_FOUND);
     }
 
 
     // 400 - PhoneNumberAlreadyExists
     @ExceptionHandler(PhoneNumberExistsException.class)
-    public ResponseEntity<Map<String,String>> handlePhoneNumberExists(
+    public ResponseEntity<ErrorResponse> handlePhoneNumberExists(
             PhoneNumberExistsException ex
     ){
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error",ex.getMessage()));
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                ex.getMessage(),
+                this.getCurrentTimestamp(),
+                null
+        );
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
     // 400 - Validation errors (@Valid Failures)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String,String>> handleValidationErrors(
+    public ResponseEntity<ErrorResponse> handleValidationErrors(
             MethodArgumentNotValidException ex
     ){
+        // 00. Initialize errors map
         Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult()
-                .getFieldErrors()
-                .forEach(err -> errors.put(err.getField(),err.getDefaultMessage()));
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+        // 01. Extract clean messages from each field
+        ex.getBindingResult().getFieldErrors().forEach(
+                err -> errors.put(err.getField(),err.getDefaultMessage()));
+
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message("Valiation failed")
+                .timestamp(this.getCurrentTimestamp())
+                .validationErrors(errors)
+                .build();
+
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     // 400 - Profile Creation Error
     @ExceptionHandler(ProfileCreationException.class)
-    public ResponseEntity<Map<String,String>> handleProfileCreationErrors(
+    public ResponseEntity<ErrorResponse> handleProfileCreationErrors(
             ProfileCreationException ex
     ){
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message",ex.getMessage()));
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                this.getCurrentTimestamp(),
+                null
+        );
+
+        return new ResponseEntity <>(error, HttpStatus.BAD_REQUEST);
     }
 
     // 400 - Profile Verification Error
     @ExceptionHandler(VerifyAccountException.class)
-    public ResponseEntity<Map<String,String>> handleAccountVerificationErrors(
+    public ResponseEntity<ErrorResponse> handleAccountVerificationErrors(
             VerifyAccountException ex)
     {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message",ex.getMessage()));
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                this.getCurrentTimestamp(),
+                null
+        );
+
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(InvalidOtpException.class)
-    public ResponseEntity<Map<String,String>> handlesInvalidOtp(
+    public ResponseEntity<ErrorResponse> handlesInvalidOtp(
             InvalidOtpException ex)
     {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message",ex.getMessage()));
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                this.getCurrentTimestamp(),
+                null
+        );
+
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(OtpExpiredException.class)
-    public ResponseEntity<Map<String,String>> handlesInvalidOtp(
+    public ResponseEntity<ErrorResponse> handlesInvalidOtp(
             OtpExpiredException ex)
     {
-        return ResponseEntity.status(HttpStatus.GONE).body(Map.of("message",ex.getMessage()));
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.GONE.value(),
+                ex.getMessage(),
+                this.getCurrentTimestamp(),
+                null
+        );
+
+        return new ResponseEntity<> (error, HttpStatus.GONE);
+    }
+
+    @ExceptionHandler(EventNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEventNotFound(
+            EventNotFoundException ex
+    ){
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                this.getCurrentTimestamp(),
+                null
+        );
+
+        return new ResponseEntity<>(error,HttpStatus.NOT_FOUND);
     }
 
 
 
     // 500 - Catch any other unhandled exception
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String,String>> handleGenericException(
+    public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex
     ){
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error","An unexpected error occurred"));
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.GONE.value(),
+                ex.getMessage(),
+                this.getCurrentTimestamp(),
+                null
+        );
+
+        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+
 }
 

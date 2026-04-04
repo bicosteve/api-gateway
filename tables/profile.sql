@@ -8,5 +8,3 @@ CREATE TABLE IF NOT EXISTS profile(
     INDEX idx_profile_id(profile_id),
     INDEX idx_phone_number(phone_number)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
---CREATE INDEX IF NOT EXISTS idx_profile_phone ON profile (profile_id, phone_number);

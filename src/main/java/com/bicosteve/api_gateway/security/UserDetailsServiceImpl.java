@@ -1,6 +1,6 @@
 package com.bicosteve.api_gateway.security;
 
-import com.bicosteve.api_gateway.repository.JdbcProfileRepository;
+import com.bicosteve.api_gateway.repository.ProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -8,12 +8,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
-    private final JdbcProfileRepository profileRepository;
+    private final ProfileRepository profileRepository;
 
 
     @Override

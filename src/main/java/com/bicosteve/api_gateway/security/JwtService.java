@@ -1,22 +1,25 @@
 package com.bicosteve.api_gateway.security;
 
-import com.bicosteve.api_gateway.dto.response.ProfileDto;
+
+import com.bicosteve.api_gateway.models.Profile;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class JwtService {
     private final JwtConfig jwtConfig;
 
     // Used to generically generate token
-    private String generateToken(ProfileDto profile, long expiration){
+    private String generateToken(Profile profile, long expiration){
         return Jwts.builder().
                 subject(profile.getProfileId().toString())
                 .claim("phone_number",profile.getPhoneNumber())
@@ -40,12 +43,12 @@ public class JwtService {
     }
 
     // Used to generate accessToken
-    public String generateAccessToken(ProfileDto profile){
+    public String generateAccessToken(Profile profile){
         return this.generateToken(profile,this.jwtConfig.getAccessTokenExpiration());
     }
 
     // Used to generate refreshToken
-    public String generateRefreshToken(ProfileDto profile){
+    public String generateRefreshToken(Profile profile){
         return this.generateToken(profile,this.jwtConfig.getRefreshTokenExpiration());
     }
 
@@ -78,7 +81,7 @@ public class JwtService {
         try{
            return this.getClaims(token).getExpiration().after(new Date());
         } catch(JwtException | IllegalArgumentException e) {
-            e.printStackTrace();
+            log.error("JwtService::There was error {} while validating token", e.getMessage());
             return false;
         }
     }
