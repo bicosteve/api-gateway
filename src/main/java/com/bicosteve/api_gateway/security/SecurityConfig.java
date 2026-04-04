@@ -54,7 +54,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST,"/api/auth/verify-account").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/auth/refresh").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/auth/test").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/events/all").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/events/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .anyRequest().authenticated()
                 )

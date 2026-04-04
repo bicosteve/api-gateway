@@ -144,6 +144,20 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<> (error, HttpStatus.GONE);
     }
 
+    @ExceptionHandler(EventNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEventNotFound(
+            EventNotFoundException ex
+    ){
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                this.getCurrentTimestamp(),
+                null
+        );
+
+        return new ResponseEntity<>(error,HttpStatus.NOT_FOUND);
+    }
+
 
 
     // 500 - Catch any other unhandled exception
@@ -160,5 +174,7 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+
 }
 

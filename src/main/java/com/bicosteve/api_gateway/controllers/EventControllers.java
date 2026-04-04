@@ -2,15 +2,11 @@ package com.bicosteve.api_gateway.controllers;
 
 
 import com.bicosteve.api_gateway.dto.response.EventDto;
-import com.bicosteve.api_gateway.models.Event;
 import com.bicosteve.api_gateway.service.EventService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -32,5 +28,11 @@ public class EventControllers{
         Map<String, List<EventDto>> allEvents = Map.of("events",events);
 
         return  ResponseEntity.status(HttpStatus.OK).body(allEvents);
+    }
+
+    @GetMapping("/{eventId}")
+    public ResponseEntity<EventDto> showAnEvent(@PathVariable String eventId){
+        EventDto event = this.eventService.getEvent(eventId);
+        return ResponseEntity.status(HttpStatus.OK).body(event);
     }
 }
