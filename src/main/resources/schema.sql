@@ -9,7 +9,6 @@ CREATE TABLE IF NOT EXISTS profile(
     INDEX idx_phone_number(phone_number)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
---CREATE INDEX IF NOT EXISTS idx_profile_phone ON profile (profile_id, phone_number);
 
 CREATE TABLE IF NOT EXISTS profile_settings(
     id          BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -26,4 +25,39 @@ CREATE TABLE IF NOT EXISTS profile_settings(
     FOREIGN KEY (profile_id) REFERENCES profile(profile_id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
---CREATE INDEX IF NOT EXISTS idx_profile_settings ON profile_settings (status, is_verified, is_deleted,profile_id);
+
+CREATE TABLE IF NOT EXISTS bets(
+    bet_id          BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    profile_id      BIGINT UNSIGNED NOT NULL,
+    stake           DECIMAL(12,2) NOT NULL,
+    is_bonus        TINYINT NOT NULL DEFAULT 0,
+    status          TINYINT NOT NULL,
+    total_odds      DECIMAL(12,2) CHECK (total_odds > 1.2),
+    possible_win    DECIMAL(12,2) NOT NULL,
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX           idx_bet_id(bet_id),
+    INDEX           idx_profile_id(profile_id),
+    INDEX           idx_status(status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE IF NOT EXISTS bet_slips(
+    bet_slip_id         BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    bet_id              BIGINT UNSIGNED NOT NULL,
+    event_id            VARCHAR(255) NOT NULL,
+    sport_id            INT UNSIGNED NOT NULL,
+    team_id             INT UNSIGNED NOT NULL,
+    market_id           INT UNSIGNED NOT NULL,
+    market_name         VARCHAR(255) NOT NULL,
+    participant_name    VARCHAR(255) NOT NULL,
+    odds                DECIMAL(6,2) NOT NULL,
+    created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at          DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (bet_id) REFERENCES bets(bet_id),
+    INDEX               idx_bet_slip_id(bet_slip_id),
+    INDEX               idx_bet_id_bet_slips(bet_id),
+    INDEX               idx_sport_id(sport_id),
+    INDEX               idx_team_id(team_id),
+    INDEX               idx_market_id(market_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
