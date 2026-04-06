@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,9 +24,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain) throws ServletException, IOException{
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain) throws ServletException, IOException{
 
         // 01. Get authorization header
         String authHeader = request.getHeader("Authorization");
@@ -40,14 +41,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authHeader.replace("Bearer ","");
 
         // 04. Validate the token
-        if(this.jwtService.validateToken(token)){
+        if(!this.jwtService.validateToken(token)){
             filterChain.doFilter(request,response);
             return;
         }
 
         // 05. Get PhoneNumber, ProfileId from token
         String phoneNumber = this.jwtService.getPhoneNumberFromToken(token);
-        Long profileId = this.jwtService.getProfileIdFromToken(token);
 
         // 06. Load user and set authentication in SecurityContext
         if(phoneNumber != null && SecurityContextHolder.getContext().getAuthentication() == null){

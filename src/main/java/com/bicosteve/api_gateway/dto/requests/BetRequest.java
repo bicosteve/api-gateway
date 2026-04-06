@@ -16,8 +16,6 @@ import java.util.List;
 @Data
 @UniqueSlip
 public class BetRequest{
-    @NotBlank(message = "Profile Id is required")
-    @JsonProperty("profile_id")
     private String profileId;
 
     @NotBlank(message = "Stake is required")
