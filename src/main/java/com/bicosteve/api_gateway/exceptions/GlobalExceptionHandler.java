@@ -16,7 +16,9 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     private String getCurrentTimestamp(){
-        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"));
+        return LocalDateTime
+                .now()
+                .format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"));
     }
 
     // 404 - ProfileNotFound
@@ -78,7 +80,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse error = ErrorResponse.builder()
                 .status(HttpStatus.BAD_REQUEST.value())
-                .message("Valiation failed")
+                .message("Validation failed")
                 .timestamp(this.getCurrentTimestamp())
                 .validationErrors(errors)
                 .build();
@@ -172,7 +174,21 @@ public class GlobalExceptionHandler {
                 null
         );
 
-        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(error,HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalException(
+            IllegalArgumentException e
+    ){
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                e.getMessage(),
+                this.getCurrentTimestamp(),
+                null
+        );
+
+        return new ResponseEntity<>(error,HttpStatus.BAD_REQUEST);
     }
 
 

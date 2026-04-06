@@ -43,7 +43,7 @@ public class BetRepository{
             ps.setDouble(2,request.getStake());
             ps.setInt(3,request.getIsBonus());
             ps.setDouble(4,request.getStake());
-            ps.setDouble(5,request.getTotalOdds());
+            ps.setDouble(5,request.getTotalOdds().doubleValue());
             ps.setDouble(6,possibleWin);
 
             return ps;

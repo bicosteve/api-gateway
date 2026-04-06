@@ -36,5 +36,5 @@ public class SlipRequest{
     @JsonProperty("odds")
     @NotNull(message = "odds is required")
     private Double odds; // comes from participant > prices odds field
-
+    
 }
