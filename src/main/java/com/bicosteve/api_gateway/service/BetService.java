@@ -3,6 +3,8 @@ package com.bicosteve.api_gateway.service;
 import com.bicosteve.api_gateway.dto.requests.BetRequest;
 import com.bicosteve.api_gateway.dto.response.BetDto;
 import com.bicosteve.api_gateway.exceptions.IllegalArgumentException;
+import com.bicosteve.api_gateway.mappers.dtomappers.BetDtoMapper;
+import com.bicosteve.api_gateway.models.Bet;
 import com.bicosteve.api_gateway.repository.BetRepository;
 import com.bicosteve.api_gateway.security.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import java.math.RoundingMode;
 public class BetService{
     private final BetRepository betRepository;
     private final JwtService jwtService;
+    private final BetDtoMapper betDtoMapper;
 
     public BetDto placeBet(BetRequest request){
         // 01. Get profileId from the token sent
@@ -61,13 +64,16 @@ public class BetService{
             throw new IllegalArgumentException("Bet did not go through");
         }
 
+        Bet bet = new Bet();
+        bet.setBetId(betId.intValue());
+        bet.setProfileId(Integer.valueOf(request.getProfileId()));
+        bet.setStake(BigDecimal.valueOf(request.getStake()));
+        bet.setPossibleWin(BigDecimal.valueOf(possibleWin.doubleValue()));
+        bet.setIsBonus(request.getIsBonus());
+        bet.setTotalOdds(request.getTotalOdds());
+        
+
         // 05. Return the result of the operation if success
-        return BetDto.builder()
-                .betId(betId.intValue())
-                .profiledId(request.getProfileId())
-                .stake(request.getStake())
-                .possibleWin(possibleWin.doubleValue())
-                .isBonus(request.getIsBonus())
-                .build();
+        return this.betDtoMapper.toDto(bet);
     }
 }
