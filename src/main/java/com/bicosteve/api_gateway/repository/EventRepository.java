@@ -189,8 +189,7 @@ public class EventRepository{
                 String eventId = rs.getString("event_id");
                 String eventUuid = rs.getString("event_uuid");
                 Integer sportId = rs.getInt("sport_id");
-                java.sql.Timestamp eventTimestamp = rs.getTimestamp("event_date");
-                LocalDateTime eventDate = (eventTimestamp != null) ? eventTimestamp.toLocalDateTime() : null;
+                LocalDateTime eventDate = rs.getObject("event_date", LocalDateTime.class);
                 String seasonType = rs.getString("season_type");
                 Integer seasonYear = rs.getInt("season_year");
                 String eventName = rs.getString("event_name");

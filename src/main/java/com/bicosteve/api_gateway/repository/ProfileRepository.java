@@ -32,8 +32,8 @@ public class ProfileRepository{
     public Optional<Profile> findById(Long id){
         String query = "SELECT * FROM profile WHERE profile_id = ?";
        try{
-           Profile profile = this.jdbcTemplate.queryForObject(
-                   query,
+           Profile profile = this.jdbcTemplate
+                   .queryForObject(query,
                    this.profileRowMapper,
                    id
            );

@@ -48,27 +48,26 @@ public class BetRepository{
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
-        int rowsAffected = this.jdbcTemplate.update(connection -> {
+        int affectedRows = this.jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sql, new String[]{"bet_id"});
 
             ps.setString(1, request.getProfileId());
-            ps.setDouble(2,request.getStake());
+            ps.setBigDecimal(2,BigDecimal.valueOf(request.getStake()));
             ps.setInt(3,request.getIsBonus());
-            ps.setDouble(4,0);
-            ps.setDouble(5,request.getTotalOdds().doubleValue());
-            ps.setDouble(6,possibleWin);
+            ps.setInt(4,0);
+            ps.setBigDecimal(5,request.getTotalOdds());
+            ps.setBigDecimal(6,BigDecimal.valueOf(possibleWin));
 
             return ps;
 
         }, keyHolder);
 
-        Long betId = null;
-
-        if(rowsAffected != 0 && keyHolder.getKey() != null){
-            betId = keyHolder.getKey().longValue();
+        if(affectedRows == 0 || keyHolder.getKey() == null){
+            throw new RuntimeException("Failed to insert bet");
         }
 
-        return betId;
+        // Return the betId as long
+        return keyHolder.getKey().longValue();
     }
 
     private void insertSlip(List<SlipRequest> slips, Long betId){
@@ -254,16 +253,17 @@ public class BetRepository{
     private String filterQuery(String filter){
         switch(filter.toLowerCase()){
             case "day" -> {
-                return "AND DATE(created_at) = CURRENT_DATE ";
+                return "AND created_at >= CURRENT_DATE AND created_at < DATE_ADD(CURRENT_DATE, INTERVAL 1 DAY)";
             }
 
             case "week" -> {
-                return "AND YEARWEEK(created_at, 1) = YEARWEEK(CURRENT_DATE,1) ";
+                return "AND created_at >= STR_TO_DATE(CONCAT(YEARWEEK(CURRENT_DATE, 1), ' Monday'), '%x%v %W') " +
+                        "AND created_at < DATE_ADD(STR_TO_DATE(CONCAT(YEARWEEK(CURRENT_DATE, 1), ' Monday'), '%x%v %W'), INTERVAL 7 DAY) ";
             }
 
             case "month" -> {
-                return "AND YEAR(created_at) = YEAR(CURRENT_DATE) " +
-                        "AND MONTH(created_at) = MONTH(CURRENT_DATE) ";
+                return "AND created_at >= (LAST_DAY(CURRENT_DATE - INTERVAL 1 MONTH) + INTERVAL 1 DAY) " +
+                        "AND created_at < (LAST_DAY(CURRENT_DATE) + INTERVAL 1 DAY) ";
             }
 
             case "all" -> {
