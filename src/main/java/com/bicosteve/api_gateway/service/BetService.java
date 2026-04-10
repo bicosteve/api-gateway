@@ -3,31 +3,33 @@ package com.bicosteve.api_gateway.service;
 import com.bicosteve.api_gateway.dto.requests.BetRequest;
 import com.bicosteve.api_gateway.dto.response.BetDto;
 import com.bicosteve.api_gateway.exceptions.IllegalArgumentException;
+import com.bicosteve.api_gateway.mappers.dtomappers.BetDtoMapper;
+import com.bicosteve.api_gateway.models.Bet;
 import com.bicosteve.api_gateway.repository.BetRepository;
-import com.bicosteve.api_gateway.security.JwtService;
+import com.bicosteve.api_gateway.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class BetService{
     private final BetRepository betRepository;
-    private final JwtService jwtService;
+    private final BetDtoMapper betDtoMapper;
 
-    public BetDto placeBet(BetRequest request){
-        // 01. Get profileId from the token sent
-        String token = request.getToken();
-        if(token == null || token.isEmpty()){
-            log.warn("Authorization token is missing");
-            throw new IllegalArgumentException("Authorization token is required!");
-        }
 
-        Long profileId = this.jwtService.getProfileIdFromToken(token);
+
+    public BetDto placeBet(BetRequest request, Authentication authentication){
+        // 01. Get profileId from the Authenticated user
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Long profileId = userDetails.getProfileId();
+
         request.setProfileId(profileId.toString());
 
         // 02. Calculate the total odds
@@ -61,13 +63,38 @@ public class BetService{
             throw new IllegalArgumentException("Bet did not go through");
         }
 
+        Bet bet = new Bet();
+        bet.setBetId(betId.intValue());
+        bet.setProfileId(Integer.valueOf(request.getProfileId()));
+        bet.setStake(BigDecimal.valueOf(request.getStake()));
+        bet.setPossibleWin(BigDecimal.valueOf(possibleWin.doubleValue()));
+        bet.setIsBonus(request.getIsBonus());
+        bet.setTotalOdds(request.getTotalOdds());
+
+
         // 05. Return the result of the operation if success
-        return BetDto.builder()
-                .betId(betId.intValue())
-                .profiledId(request.getProfileId())
-                .stake(request.getStake())
-                .possibleWin(possibleWin.doubleValue())
-                .isBonus(request.getIsBonus())
-                .build();
+        return this.betDtoMapper.toDto(bet);
+    }
+
+    public List<BetDto> getBets(String filter, int page, int size, Authentication auth){
+        // STEP 01::Get profileId from the authenticated user
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        Long profileId = userDetails.getProfileId();
+
+        // STEP 02::Fetch the bets based on the filters and page size
+        List<Bet> bets = this.betRepository.fetchBets(profileId,filter,page,size);
+
+        return bets.stream().map(this.betDtoMapper::toDto).toList();
+    }
+
+    public BetDto getBet(Long betId, Authentication auth){
+        // STEP 01::Get profileId from the authenticated user
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        Long profileId = userDetails.getProfileId();
+
+        // STEP 02::Fetch the bet with its betId
+        Bet bet = this.betRepository.fetchABet(profileId,betId);
+
+        return this.betDtoMapper.toDto(bet);
     }
 }

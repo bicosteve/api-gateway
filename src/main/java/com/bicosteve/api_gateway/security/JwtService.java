@@ -52,30 +52,11 @@ public class JwtService {
         return this.generateToken(profile,this.jwtConfig.getRefreshTokenExpiration());
     }
 
-    // Used to get the owner from the token
-    public Long getProfileIdFromToken(String token){
-        return Long.valueOf(this.getClaims(token).getSubject());
-    }
-
     // Used to get phoneNumber from the token
     public String getPhoneNumberFromToken(String token){
         return String.valueOf(this.getClaims(token).get("phone_number"));
     }
 
-    // Used to get status from the token
-    public Integer getProfileStatus(String token){
-        return (Integer) this.getClaims(token).get("status");
-    }
-
-    // Used to get isVerified from the token
-    public Integer getProfileIsVerified(String token){
-        return (Integer) this.getClaims(token).get("is_verified");
-    }
-
-    // Used to get isDeleted from the token
-    public Integer getProfileIsDeleted(String token){
-        return (Integer) this.getClaims(token).get("is_verified");
-    }
 
     public boolean validateToken(String token){
         try{
