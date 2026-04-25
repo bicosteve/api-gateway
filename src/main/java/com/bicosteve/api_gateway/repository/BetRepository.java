@@ -73,8 +73,18 @@ public class BetRepository{
     private void insertSlip(List<SlipRequest> slips, Long betId){
         String sql = """
                 INSERT INTO
-                    bet_slips(bet_id,event_id,sport_id,team_id,market_id,market_name,participant_name,odds)
-                VALUES(?, ?, ?, ?, ?, ?, ?, ?)
+                    bet_slips(
+                    bet_id,
+                    event_id,
+                    sport_id,
+                    team_id,
+                    market_id,
+                    market_name,
+                    participant_name,
+                    odds,
+                    special_bet_value
+                    )
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
         this.jdbcTemplate.batchUpdate(
@@ -90,6 +100,7 @@ public class BetRepository{
                     ps.setString(6,slip.getMarketName());
                     ps.setString(7, slip.getParticipantName());
                     ps.setBigDecimal(8, BigDecimal.valueOf(slip.getOdds()));
+                    ps.setString(9,slip.getSpecialBetValue());
                 });
     }
 
@@ -111,7 +122,8 @@ public class BetRepository{
                     s.market_id,
                     s.market_name,
                     s.participant_name,
-                    s.odds
+                    s.odds,
+                    s.special_bet_value
                 FROM (
                     SELECT
                         bet_id,
@@ -173,6 +185,7 @@ public class BetRepository{
                 String marketName = rs.getString("market_name");
                 String participantName = rs.getString("participant_name");
                 BigDecimal odds = rs.getBigDecimal("odds");
+                String specialBetValue = rs.getString("special_bet_value");
 
 
                 if(eventId != null){
@@ -188,6 +201,7 @@ public class BetRepository{
                     slip.setMarketName(marketName);
                     slip.setParticipantName(participantName);
                     slip.setOdds(odds);
+                    slip.setSpecialBetValue(specialBetValue);
 
                     bet.getSlips().add(slip);
 
