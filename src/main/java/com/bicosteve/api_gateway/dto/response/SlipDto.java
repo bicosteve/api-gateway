@@ -21,4 +21,5 @@ public class SlipDto{
     private String          marketName;
     private String          participantName;
     private BigDecimal      odds;
+    private String          specialBetValue;
 }

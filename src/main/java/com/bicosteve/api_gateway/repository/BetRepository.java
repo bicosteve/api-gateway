@@ -123,7 +123,8 @@ public class BetRepository{
                     s.market_name,
                     s.participant_name,
                     s.odds,
-                    s.special_bet_value
+                    s.special_bet_value,
+                    s.status
                 FROM (
                     SELECT
                         bet_id,
@@ -186,6 +187,7 @@ public class BetRepository{
                 String participantName = rs.getString("participant_name");
                 BigDecimal odds = rs.getBigDecimal("odds");
                 String specialBetValue = rs.getString("special_bet_value");
+                String slipStatus = rs.getString("status");
 
 
                 if(eventId != null){
@@ -202,6 +204,7 @@ public class BetRepository{
                     slip.setParticipantName(participantName);
                     slip.setOdds(odds);
                     slip.setSpecialBetValue(specialBetValue);
+                    slip.setStatus(slipStatus);
 
                     bet.getSlips().add(slip);
 

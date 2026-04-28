@@ -7,6 +7,7 @@ import com.bicosteve.api_gateway.models.Price;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -71,7 +72,7 @@ public class EventDtoMapper{
                                         participantDto.setMarketId(participant.getMarketId());
 
                                         // 05. Check & set price for participants
-                                        if(participant.getPrices() != null){
+                                        if(participant.getPrices() != null && !participant.getPrices().isEmpty()){
 
                                             Price price = participant.getPrices().get(0);
 
@@ -86,6 +87,8 @@ public class EventDtoMapper{
 
                                             participantDto.setPrices(List.of(priceDto));
 
+                                        } else {
+                                            participantDto.setPrices(new ArrayList<>());
                                         }
 
                                         return participantDto;

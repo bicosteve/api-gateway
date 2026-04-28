@@ -74,7 +74,7 @@ public class EventRepository{
                     pr.price,
                     pr.is_main_line,
                     pr.odds,
-                    pr.participant_id,
+                    pr.participant_id AS price_participant_id,
                     pr.handicap_value,
                     pr.line_id,
                     pr.closed_at AS price_closed_at
@@ -256,7 +256,7 @@ public class EventRepository{
                     BigDecimal price = rs.getBigDecimal("price");
                     Integer isMainLine = rs.getInt("is_main_line");
                     BigDecimal priceOdd = rs.getBigDecimal("odds");
-                    Integer priceParticipantId = rs.getInt("participant_id");
+                    Integer priceParticipantId = rs.getInt("price_participant_id");
                     String handicapValue = rs.getString("handicap_value");
                     String lineId = rs.getString("line_id");
                     java.sql.Timestamp priceTimestamp = rs.getTimestamp("price_closed_at");
