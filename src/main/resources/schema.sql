@@ -52,6 +52,8 @@ CREATE TABLE IF NOT EXISTS bet_slips(
     market_name         VARCHAR(255) NOT NULL,
     participant_name    VARCHAR(255) NOT NULL,
     odds                DECIMAL(6,2) NOT NULL,
+    special_bet_value   VARCHAR(255),
+    status              INT UNSIGNED NOT NULL DEFAULT 1,
     created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at          DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (bet_id) REFERENCES bets(bet_id),

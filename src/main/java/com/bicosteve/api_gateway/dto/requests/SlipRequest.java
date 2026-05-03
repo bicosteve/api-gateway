@@ -1,6 +1,8 @@
 package com.bicosteve.api_gateway.dto.requests;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -36,5 +38,29 @@ public class SlipRequest{
     @JsonProperty("odds")
     @NotNull(message = "odds is required")
     private Double odds; // comes from participant > prices odds field
+
+
+    @JsonProperty("special_bet_value")
+    @NotNull(message = "special_bet_value is required")
+    private String specialBetValue = "";
+
+    @AssertTrue(message = "special_bet_value is required for this market")
+    @JsonIgnore
+    public boolean isSpecialBetValueValid(){
+        // 01. Handle null safety for marketName
+        if(marketName == null) return true;
+
+        String market = marketName.toLowerCase();
+
+        // 02. Check if the market is a special market
+        boolean isSpecialMarket = market.contains("handicap") || market.contains("totals");
+
+        // 03. If special market, MUST NOT be null or ""
+        if(isSpecialMarket){
+            return specialBetValue != null && !specialBetValue.isBlank();
+        }
+
+        return true;
+    }
     
 }

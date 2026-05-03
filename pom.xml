@@ -18,7 +18,17 @@
 		<license/>
 	</licenses>
 	<developers>
-		<developer/>
+		<developer>
+			<id>bicosteve</id>
+			<name>Bico Steve</name>
+			<email>bicosteve4@gmail.com</email>
+			<organizationUrl>https://github.com/bicosteve</organizationUrl>
+			<roles>
+				<role>Lead Developer</role>
+				<role>Architect</role>
+			</roles>
+			<timezone>Africa/Nairobi</timezone>
+		</developer>
 	</developers>
 	<scm>
 		<connection/>
