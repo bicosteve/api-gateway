@@ -63,3 +63,38 @@ CREATE TABLE IF NOT EXISTS bet_slips(
     INDEX               idx_team_id(team_id),
     INDEX               idx_market_id(market_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE IF NOT EXISTS transactions(
+    id                  BIGINT PRIMARY  KEY AUTO_INCREMENT,
+    profile_id          BIGINT UNSIGNED NOT NULL,
+    reference           VARCHAR(100) NOT NULL UNIQUE,
+    type                TINYINT NOT NULL ENUM(0,1) DEFAULT 0,
+    amount              DECIMAL(10,2) NOT NULL,
+    status              TINYINT NOT NULL ENUM(1,2,3,4) DEFAULT 1,
+    created_by          VARCHAR(100) NOT NULL,
+    created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at          DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE
+    CURRENT_TIMESTAMP,
+    FOREIGN KEY (profile_id) REFERENCES profile(profile_id),
+    INDEX idx_transaction_profile_id (profile_id),
+    INDEX idx_transaction_type (type),
+    INDEX idx_transaction_status (status),
+    INDEX idx_transaction_created_at (created_at),
+    INDEX idx_transaction_created_by (created_by)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE IF NOT EXISTS wallet(
+    id                  BIGINT PRIMARY KEY AUTO_INCREMENT,
+    profile_id          BIGINT UNSIGNED NOT NULL,
+    balance             DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    bonus               DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    created_by          VARCHAR(100) NOT NULL,
+    created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at          DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE
+    CURRENT_TIMESTAMP,
+    FOREIGN KEY (profile_id) REFERENCES profile(profile_id),
+    INDEX idx_wallet_id (id),
+    INDEX idx_wallet_profile_id (profile_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
