@@ -14,7 +14,8 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 
 @Repository
@@ -80,6 +81,7 @@ public class EventRepository{
                     pr.closed_at AS price_closed_at
                 FROM (
                     SELECT * FROM rundown_event
+                    WHERE event_date > NOW()
                     ORDER BY updated_at DESC
                     LIMIT ? OFFSET ?
                 ) e
@@ -168,7 +170,7 @@ public class EventRepository{
                 LEFT JOIN scores s ON s.event_id = e.event_id
                 LEFT JOIN participants p ON p.market_id = m.id
                 LEFT JOIN prices pr ON pr.participant_id = p.participant_id
-                WHERE e.event_id = ?
+                WHERE e.event_id = ? AND e.event_date > NOW()
              """;
 
         return this.jdbcTemplate.query(
@@ -189,7 +191,7 @@ public class EventRepository{
                 String eventId = rs.getString("event_id");
                 String eventUuid = rs.getString("event_uuid");
                 Integer sportId = rs.getInt("sport_id");
-                LocalDateTime eventDate = rs.getObject("event_date", LocalDateTime.class);
+                OffsetDateTime eventDate = rs.getObject("event_date", OffsetDateTime.class);
                 String seasonType = rs.getString("season_type");
                 Integer seasonYear = rs.getInt("season_year");
                 String eventName = rs.getString("event_name");
@@ -260,7 +262,7 @@ public class EventRepository{
                     String handicapValue = rs.getString("handicap_value");
                     String lineId = rs.getString("line_id");
                     java.sql.Timestamp priceTimestamp = rs.getTimestamp("price_closed_at");
-                    LocalDateTime priceClosedAt = (priceTimestamp != null) ? priceTimestamp.toLocalDateTime() : null;
+                    OffsetDateTime priceClosedAt = (priceTimestamp != null) ? priceTimestamp.toInstant().atOffset(ZoneOffset.UTC) : null;
 
 
                     // Set participant
@@ -399,7 +401,7 @@ public class EventRepository{
                     event.setSportId(rs.getInt("sport_id"));
 
                     if(eventDateTs != null){
-                        event.setEventDate(eventDateTs.toLocalDateTime());
+                        event.setEventDate(eventDateTs.toInstant().atOffset(ZoneOffset.UTC));
                     }
 
                     event.setSeasonType(rs.getString("season_type"));
@@ -538,7 +540,7 @@ public class EventRepository{
                             price.setHandicapValue(priceHandicapValue);
 
                             if(priceClosedAtTs != null){
-                                price.setClosedAt(priceClosedAtTs.toLocalDateTime());
+                                price.setClosedAt(priceClosedAtTs.toInstant().atOffset(ZoneOffset.UTC));
                             }
 
                             participant.getPrices().add(price);

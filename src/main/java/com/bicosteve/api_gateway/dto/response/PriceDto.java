@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,5 +19,5 @@ public class PriceDto{
     private Integer             participantId;
     private String              handicapValue;
     private String              lineId;
-    private LocalDateTime       closedAt;
+    private OffsetDateTime      closedAt;
 }

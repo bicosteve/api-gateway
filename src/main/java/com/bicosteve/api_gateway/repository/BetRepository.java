@@ -168,7 +168,7 @@ public class BetRepository{
                     b.setStatus(status);
                     b.setTotalOdds(totalOdds);
                     b.setPossibleWin(possibleWin);
-                    b.setCreated_at(createdAt);
+                    b.setCreatedAt(createdAt);
 
                     b.setSlips(new ArrayList<>());
 

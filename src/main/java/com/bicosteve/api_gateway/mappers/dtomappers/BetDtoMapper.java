@@ -25,7 +25,7 @@ public class BetDtoMapper{
         dto.setStake(bet.getStake());
         dto.setTotalOdds(bet.getTotalOdds());
         dto.setPossibleWin(bet.getPossibleWin());
-        dto.setCreatedAt(bet.getCreated_at());
+        dto.setCreatedAt(bet.getCreatedAt());
 
         if(bet.getSlips() != null){
             List<SlipDto> slipsDto = bet.getSlips().stream()

@@ -1,6 +1,8 @@
 package com.bicosteve.api_gateway.models;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +13,8 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Bet{
     private Integer         betId;
     private String          eventId;
@@ -20,8 +24,8 @@ public class Bet{
     private Integer         status;
     private BigDecimal      totalOdds;
     private BigDecimal      possibleWin;
-    private LocalDateTime   created_at;
-    private LocalDateTime   updated_at;
+    private LocalDateTime   createdAt;
+    private LocalDateTime   updatedAt;
 
     private List<Slip> slips;
 }

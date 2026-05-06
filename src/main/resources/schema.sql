@@ -1,29 +1,29 @@
 CREATE TABLE IF NOT EXISTS profile(
-    profile_id      BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    phone_number    VARCHAR(20) NOT NULL UNIQUE,
-    password_hash   VARCHAR(255) NOT NULL,
-    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
-    modified_at     DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    profile_id              BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    phone_number            VARCHAR(20) NOT NULL UNIQUE,
+    password_hash           VARCHAR(255) NOT NULL,
+    created_at              DATETIME DEFAULT CURRENT_TIMESTAMP,
+    modified_at             DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_profile_phone (profile_id,phone_number),
     INDEX idx_profile_id(profile_id),
     INDEX idx_phone_number(phone_number)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
 CREATE TABLE IF NOT EXISTS profile_settings(
-    id          BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    status      TINYINT DEFAULT 0,
-    is_verified TINYINT DEFAULT 0,
-    is_deleted  TINYINT DEFAULT 0,
-    profile_id  BIGINT UNSIGNED NOT NULL,
-    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-    modified_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    id                      BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    status                  TINYINT DEFAULT 0,
+    is_verified             TINYINT DEFAULT 0,
+    is_deleted              TINYINT DEFAULT 0,
+    profile_id              BIGINT UNSIGNED NOT NULL,
+    created_at              DATETIME DEFAULT CURRENT_TIMESTAMP,
+    modified_at             DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_settings_status(status),
     INDEX idx_settings_is_verified(is_verified),
     INDEX idx_settings_is_deleted(is_deleted),
     INDEX idx_profile_settings(status, is_verified, is_deleted,profile_id),
     FOREIGN KEY (profile_id) REFERENCES profile(profile_id) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
 CREATE TABLE IF NOT EXISTS bets(
@@ -65,17 +65,16 @@ CREATE TABLE IF NOT EXISTS bet_slips(
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
-CREATE TABLE IF NOT EXISTS transactions(
-    id                  BIGINT PRIMARY  KEY AUTO_INCREMENT,
+CREATE TABLE IF NOT EXISTS transactions (
+    id                  BIGINT PRIMARY KEY AUTO_INCREMENT,
     profile_id          BIGINT UNSIGNED NOT NULL,
     reference           VARCHAR(100) NOT NULL UNIQUE,
-    type                TINYINT NOT NULL ENUM(0,1) DEFAULT 0,
-    amount              DECIMAL(10,2) NOT NULL,
-    status              TINYINT NOT NULL ENUM(1,2,3,4) DEFAULT 1,
+    type                TINYINT NOT NULL DEFAULT 0 CHECK (type IN (0,1)),
+    amount              DECIMAL(10, 2) NOT NULL,
+    status              TINYINT NOT NULL DEFAULT 1 CHECK (status IN (1,2,3,4)),
     created_by          VARCHAR(100) NOT NULL,
     created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at          DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE
-    CURRENT_TIMESTAMP,
+    updated_at          DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (profile_id) REFERENCES profile(profile_id),
     INDEX idx_transaction_profile_id (profile_id),
     INDEX idx_transaction_type (type),
@@ -95,6 +94,7 @@ CREATE TABLE IF NOT EXISTS wallet(
     updated_at          DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE
     CURRENT_TIMESTAMP,
     FOREIGN KEY (profile_id) REFERENCES profile(profile_id),
+    CONSTRAINT chk_balance_non_negative CHECK (balance >= 0),
     INDEX idx_wallet_id (id),
     INDEX idx_wallet_profile_id (profile_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
