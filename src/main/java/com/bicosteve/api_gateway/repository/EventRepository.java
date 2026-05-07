@@ -81,7 +81,7 @@ public class EventRepository{
                     pr.closed_at AS price_closed_at
                 FROM (
                     SELECT * FROM rundown_event
-                    WHERE event_date > NOW()
+                    WHERE event_date >= UTC_TIMESTAMP()
                     ORDER BY updated_at DESC
                     LIMIT ? OFFSET ?
                 ) e
@@ -170,7 +170,7 @@ public class EventRepository{
                 LEFT JOIN scores s ON s.event_id = e.event_id
                 LEFT JOIN participants p ON p.market_id = m.id
                 LEFT JOIN prices pr ON pr.participant_id = p.participant_id
-                WHERE e.event_id = ? AND e.event_date > NOW()
+                WHERE e.event_id = ? AND e.event_date >= UTC_TIMESTAMP()
              """;
 
         return this.jdbcTemplate.query(
