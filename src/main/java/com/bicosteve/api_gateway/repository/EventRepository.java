@@ -82,7 +82,7 @@ public class EventRepository{
                 FROM (
                     SELECT * FROM rundown_event
                     WHERE event_date >= UTC_TIMESTAMP()
-                    ORDER BY updated_at DESC
+                    ORDER BY event_date
                     LIMIT ? OFFSET ?
                 ) e
                 LEFT JOIN teams t ON t.event_id = e.event_id
