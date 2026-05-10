@@ -90,15 +90,10 @@ public class EventRepository{
                 LEFT JOIN scores s ON s.event_id = e.event_id
                 LEFT JOIN participants p ON m.id = p.market_id
                 LEFT JOIN prices pr ON pr.participant_id = p.participant_id
-                ORDER BY e.updated_at DESC
+                ORDER BY t.is_home DESC, m.id
              """;
 
-        log.info(
-                "EventRepository::Get events query {}, limit {}, offset {}",
-                sql,
-                limit,
-                offset
-                );
+        log.info("Fetching events with limit {}, offset {}", limit, offset);
 
         return this.jdbcTemplate.query(
                 sql,

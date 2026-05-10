@@ -49,6 +49,7 @@ public class ProfileService {
         Profile profile = this.profileRepository.findById(id)
                         .orElseThrow(() -> new ProfileNotFoundException(id));
         // 00. Convert model to DTO hiding internal fields
+        log.info("ProfileService::getProfileById {}", profile);
         return this.profileDtoMapper.toDto(profile);
     }
 
@@ -61,6 +62,7 @@ public class ProfileService {
         // 01. Check if the phone number exists in DB.
         // Throw error if exists to avoid duplicate registration.
         if(this.profileRepository.existsByPhoneNumber(request.getPhoneNumber())){
+            log.warn("ProfileService::createProfile: Phone number {} already exists", request.getPhoneNumber());
             throw new PhoneNumberExistsException(request.getPhoneNumber());
         }
 
@@ -85,7 +87,6 @@ public class ProfileService {
         this.mailgunService.sendEmail(mail);
 
         // 06. Return a map of message of success and otp
-
         log.info(
                 "ProfileService::Verification OTP sent to {} email",
                 request.getEmail()

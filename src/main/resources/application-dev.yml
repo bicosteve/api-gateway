@@ -7,6 +7,9 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: ${DB_DRIVER}
+    hikari:
+      keepalive-time: 30_000 # keep connection alive by testing them every 30s
+      minimum-idle: 10 # ensure pool does not die when idle
 
   data:
     redis:
@@ -47,8 +50,12 @@ server:
   port: ${APP_PORT}
 
 logging:
+  config: classpath:api-gateway-logback.xml
   level:
+    root: INFO
+    com.bicosteve.api_gateway: ${APP_LOGGING}
     org.springframework.jdbc: ${LOGGING_LEVEL}
+    or.apache.coyote: ${APP_LOGGING}
 
 mailgun:
   api-key: ${MAILGUN_API_KEY}
