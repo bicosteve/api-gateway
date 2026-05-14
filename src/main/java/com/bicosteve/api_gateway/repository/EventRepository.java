@@ -82,7 +82,7 @@ public class EventRepository{
                 FROM (
                     SELECT * FROM rundown_event
                     WHERE event_date >= UTC_TIMESTAMP()
-                    ORDER BY event_date
+                    ORDER BY event_date ASC
                     LIMIT ? OFFSET ?
                 ) e
                 LEFT JOIN teams t ON t.event_id = e.event_id
@@ -90,7 +90,7 @@ public class EventRepository{
                 LEFT JOIN scores s ON s.event_id = e.event_id
                 LEFT JOIN participants p ON m.id = p.market_id
                 LEFT JOIN prices pr ON pr.participant_id = p.participant_id
-                ORDER BY t.is_home DESC, m.id
+                ORDER BY e.event_date ASC, t.is_home DESC, m.market_type_id ASC
              """;
 
         log.info("Fetching events with limit {}, offset {}", limit, offset);
@@ -166,6 +166,7 @@ public class EventRepository{
                 LEFT JOIN participants p ON p.market_id = m.id
                 LEFT JOIN prices pr ON pr.participant_id = p.participant_id
                 WHERE e.event_id = ? AND e.event_date >= UTC_TIMESTAMP()
+                ORDER BY t.is_home DESC, m.market_type_id ASC
              """;
 
         return this.jdbcTemplate.query(

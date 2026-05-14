@@ -55,7 +55,7 @@ logging:
     root: INFO
     com.bicosteve.api_gateway: ${APP_LOGGING}
     org.springframework.jdbc: ${LOGGING_LEVEL}
-    or.apache.coyote: ${APP_LOGGING}
+    org.apache.coyote: ${APP_LOGGING}
 
 mailgun:
   api-key: ${MAILGUN_API_KEY}
