@@ -29,6 +29,7 @@ public class EventService{
     public EventDto getEvent(String eventId){
         Event event = this.eventRepository.fetchOneEvent(eventId);
         if(event == null){
+            log.warn("No event with id {} was found", eventId);
             throw new EventNotFoundException(eventId);
         }
 

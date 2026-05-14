@@ -35,32 +35,37 @@ public class BetService{
         // 02. Calculate the total odds
         request.calculateTotalOdds();
 
-        // 02b. Ensure total odds is calculated to 2 decimal places
+        // 03. Ensure total odds is calculated to 2 decimal places
         if(request.getTotalOdds() != null){
             request.setTotalOdds(request.getTotalOdds().setScale(2, RoundingMode.HALF_UP));
         }
 
-        // 02c. Make sure total odds is not less than 1.20
+        // 04. Make sure total odds is not less than 1.20
         if(request.getTotalOdds() == null || request.getTotalOdds().compareTo(new BigDecimal("1.2")) < 0){
-            log.warn("total odds must be greater than 1.2");
+            log.warn("Total odds must be greater than 1.2");
             throw new java.lang.IllegalArgumentException("Total odds must be greater than 1.2");
         }
 
-        // 03. Calculate the possible win
+        // 05. Calculate the possible win
         BigDecimal stake = BigDecimal.valueOf(request.getStake()).setScale(2,RoundingMode.HALF_UP);
         BigDecimal possibleWin = request.getTotalOdds().multiply(stake).setScale(2, RoundingMode.HALF_UP);
 
-        // 03b. Total Win should not be less than 0
+        // 06. Total Win should not be less than 0
         if(possibleWin.compareTo(BigDecimal.ONE) < 0){
-            log.warn("The possible win must be above {}",1);
+            log.warn(
+                    "Placing bet for profile {}. The possible win must be greater than {}",
+                    request.getProfileId(),
+                    possibleWin
+            );
+
             throw new IllegalArgumentException("Possible win must be % and above ".formatted(1.0));
         }
 
-        // 04. Try inserting bet on the bets & bet_slips table
+        // 07. Try inserting bet on the bets & bet_slips table
         Long betId = this.betRepository.addBet(request,possibleWin.doubleValue());
         if(betId == null || betId < 1){
-            log.warn("Bet did not go through");
-            throw new IllegalArgumentException("Bet did not go through");
+            log.warn("Profile {} placing bet. Bet did not go through", request.getProfileId());
+            throw new IllegalArgumentException("Bet placement failed");
         }
 
         Bet bet = new Bet();
@@ -72,7 +77,8 @@ public class BetService{
         bet.setTotalOdds(request.getTotalOdds());
 
 
-        // 05. Return the result of the operation if success
+        // 08. Return the result of the operation if success
+        log.info("Placing bet for profile {} and bet {}",request.getProfileId(), bet);
         return this.betDtoMapper.toDto(bet);
     }
 
@@ -94,6 +100,7 @@ public class BetService{
 
         // STEP 02::Fetch the bet with its betId
         Bet bet = this.betRepository.fetchABet(profileId,betId);
+        log.info("Bet for profile {} and bet {}", profileId, bet);
 
         return this.betDtoMapper.toDto(bet);
     }

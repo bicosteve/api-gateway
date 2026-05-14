@@ -9,6 +9,7 @@ import com.bicosteve.api_gateway.models.Bet;
 import com.bicosteve.api_gateway.models.Slip;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -25,6 +26,7 @@ import java.util.Map;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
 public class BetRepository{
     private final JdbcTemplate jdbcTemplate;
     private final BetRowMapper betRowMapper;
@@ -35,6 +37,8 @@ public class BetRepository{
     public Long addBet(BetRequest request,Double possibleWin){
         Long betId = insertBet(request,possibleWin);
         insertSlip(request.getSlips(),betId);
+
+        log.info("Inserted betId {} and slips {}",betId,request.getSlips());
 
         return betId;
     }
@@ -168,7 +172,7 @@ public class BetRepository{
                     b.setStatus(status);
                     b.setTotalOdds(totalOdds);
                     b.setPossibleWin(possibleWin);
-                    b.setCreated_at(createdAt);
+                    b.setCreatedAt(createdAt);
 
                     b.setSlips(new ArrayList<>());
 
@@ -263,6 +267,8 @@ public class BetRepository{
             // query() -> when you expect multiple rows
             bet.setSlips(slips);
         }
+
+        log.info("Fetching bet {}", bet);
 
         return bet;
     }

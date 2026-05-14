@@ -40,7 +40,7 @@ public class ProfileRepository{
 
            return Optional.ofNullable(profile);
        } catch(EmptyResultDataAccessException e) {
-           log.info("ProfileRepository::no profile found for {}",id);
+           log.info("No profile found for {}",id);
            return Optional.empty();
        }
     }
@@ -73,7 +73,7 @@ public class ProfileRepository{
                     phoneNumber
             );
 
-            log.info("ProfileRepository::profile data {}",profile);
+            log.info("Profile data {} ", profile);
 
             return Optional.ofNullable(profile);
 
@@ -124,6 +124,7 @@ public class ProfileRepository{
             // 02b. Guard profileId before using it
             // Throws exception if the profileId is null
             if(profileId == null){
+                log.warn("ProfileId is null");
                 throw new ProfileCreationException(request.getPhoneNumber());
             }
 
@@ -137,7 +138,7 @@ public class ProfileRepository{
             this.jdbcTemplate.update(q, 0, 0, 0, profileId, Timestamp.valueOf(this.timeNow),Timestamp.valueOf(this.timeNow));
 
         }catch(DataAccessException ex){
-            log.warn("ProfileRepository::Error {} getting profile",ex.getMessage());
+            log.warn("Error {} getting profile",ex.getMessage());
             throw new ProfileCreationException(request.getPhoneNumber());
         }
     }
@@ -163,7 +164,7 @@ public class ProfileRepository{
                     profileId
             );
         } catch(DataAccessException e) {
-            log.warn("ProfileRepository::Error {} updating profile",e.getMessage());
+            log.warn("Error {} updating profile",e.getMessage());
             throw new VerifyAccountException(e.getMessage());
         }
 

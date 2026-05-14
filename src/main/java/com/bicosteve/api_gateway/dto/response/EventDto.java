@@ -4,7 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +15,7 @@ import java.util.List;
 public class EventDto{
     private String                      eventId;
     private Integer                     sportId;
-    private LocalDateTime               eventDate;
+    private OffsetDateTime              eventDate;
     private String                      seasonType;
     private Integer                     seasonYear;
     private String                      eventName;

@@ -34,3 +34,7 @@ build/
 
 ### App
 .env
+
+# Logs
+logs/*.log
+

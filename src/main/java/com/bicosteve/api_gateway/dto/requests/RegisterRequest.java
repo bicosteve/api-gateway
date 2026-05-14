@@ -6,10 +6,14 @@ import com.bicosteve.api_gateway.validation.ValidPhoneNumber;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @PasswordMatches
+@NoArgsConstructor
+@AllArgsConstructor
 public class RegisterRequest {
     @NotBlank(message = "Phone number is required")
     @Size(max = 10, message = "Phone number must be exactly 10 characters")

@@ -6,9 +6,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@AllArgsConstructor
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class LoginRequest {
     @NotBlank(message = "Phone number is required")
     @Size(max = 10, message = "Phone number must be exactly 10 characters")

@@ -23,7 +23,7 @@ public class BetRowMapper implements RowMapper<Bet>{
         bet.setStatus(rs.getInt("status"));
         bet.setTotalOdds(rs.getBigDecimal("total_odds"));
         bet.setPossibleWin(rs.getBigDecimal("possible_win"));
-        bet.setCreated_at(rs.getObject("created_at", LocalDateTime.class));
+        bet.setCreatedAt(rs.getObject("created_at", LocalDateTime.class));
 
         return bet;
     }
