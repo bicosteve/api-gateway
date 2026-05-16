@@ -24,6 +24,7 @@ public class SlipRowMapper implements RowMapper<Slip>{
         slip.setMarketName(rs.getString("market_name"));
         slip.setParticipantName(rs.getString("participant_name"));
         slip.setOdds(rs.getBigDecimal("odds"));
+        slip.setSpecialBetValue(rs.getString("special_bet_value"));
 
         return slip;
     }

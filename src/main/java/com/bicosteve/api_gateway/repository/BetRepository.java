@@ -256,7 +256,8 @@ public class BetRepository{
                     market_id,
                     market_name,
                     participant_name,
-                    odds
+                    odds,
+                    special_bet_value,
                 FROM bet_slips
                 WHERE bet_id = ?
                 """;
