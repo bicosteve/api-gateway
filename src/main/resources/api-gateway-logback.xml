@@ -6,7 +6,7 @@
     <property name="LOG_FILE" value="${LOG_PATH}/${APP_NAME}"/>
     <property name="MAX_HISTORY" value="30"/> <!--keep for 30 days-->
     <property name="MAX_SIZE" value="50MB"/>
-    <property name="MAX_SIZE_CAP" value="500mb"/>
+    <property name="TOTAL_SIZE_CAP" value="500MB"/>
 
     <!--Set Log Patterns for Console & File -->
     <property
@@ -26,7 +26,6 @@
         </encoder>
     </appender>
 
-
     <!-- Daily Rolling File Appender for ALL LOGS -->
     <appender name="FILE_ALL" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_FILE}.log</file>
@@ -37,7 +36,7 @@
             <maxFileSize>${MAX_SIZE}</maxFileSize>
             <maxHistory>${MAX_HISTORY}</maxHistory>
             <!--Total log size cap-->
-            <totalSizeCap>${MAX_SIZE_CAP}</totalSizeCap>
+            <totalSizeCap>${TOTAL_SIZE_CAP}</totalSizeCap>
         </rollingPolicy>
         <encoder>
             <pattern>${FILE_PATTERN}</pattern>
@@ -56,7 +55,7 @@
             <fileNamePattern>${LOG_FILE}-error.%d{dd-MM-yyyy}.%i.log</fileNamePattern>
             <maxFileSize>${MAX_SIZE}</maxFileSize>
             <maxHistory>${MAX_HISTORY}</maxHistory>
-            <totalSizeCap>${MAX_SIZE_CAP}</totalSizeCap>
+            <totalSizeCap>${TOTAL_SIZE_CAP}</totalSizeCap>
         </rollingPolicy>
         <encoder>
             <pattern>${FILE_PATTERN}</pattern>
@@ -75,20 +74,12 @@
         <queueSize>256</queueSize>
         <discardingThreshold>20</discardingThreshold>
     </appender>
+    
 
-    <!-- ─────────────────────────────────────────── -->
-    <!-- LOGGER LEVELS                                -->
-    <!-- ─────────────────────────────────────────── -->
-
-    <!-- App packages — DEBUG in dev, INFO in prod -->
-<!--    <logger name="com.bicosteve.api_gateway" level="INFO" additivity="false">-->
-<!--        <appender-ref ref="CONSOLE"/>-->
-<!--        <appender-ref ref="ASYNC_FILE"/>-->
-<!--        <appender-ref ref="ASYNC_ERROR"/>-->
-<!--    </logger>-->
-
-    <!-- Spring framework — reduce noise -->
+    <!-- Reduce Spring framework noise -->
     <logger name="org.springframework" level="WARN"/>
+
+    <!-- Show SQL/JDBC related info -->
     <logger name="org.springframework.jdbc" level="INFO"/>
 
     <!-- HikariCP connection pool -->
@@ -97,19 +88,13 @@
     <!-- RabbitMQ -->
     <logger name="org.springframework.amqp" level="WARN"/>
 
-<!--    &lt;!&ndash; Root Logger &ndash;&gt;-->
-<!--    <root level="INFO">-->
-<!--        <appender-ref ref="CONSOLE"/>-->
-<!--        <appender-ref ref="ASYNC_FILE"/>-->
-<!--        <appender-ref ref="ASYNC_ERROR"/>-->
-<!--    </root>-->
-
-
     <!-- Spring Profiles  -->
     <springProfile name="dev">
-        <logger name="com.bicosteve.api_gateway" level="DEBUG" additivity="false">
+        <logger name="com.bicosteve.api_gateway" level="DEBUG"
+                additivity="false">
             <appender-ref ref="CONSOLE"/>
         </logger>
+
         <root level="DEBUG">
             <appender-ref ref="CONSOLE"/>
         </root>
@@ -121,6 +106,7 @@
             <appender-ref ref="ASYNC_FILE"/>
             <appender-ref ref="ASYNC_ERROR"/>
         </logger>
+
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="ASYNC_FILE"/>

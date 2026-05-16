@@ -78,7 +78,7 @@ public class EventDtoMapper{
 
                                             PriceDto priceDto = new PriceDto();
                                             priceDto.setPriceId(price.getPriceId());
-                                            priceDto.setRundownId(price.getRundownId());
+                                            // priceDto.setRundownId(price.getRundownId());
                                             priceDto.setOdds(price.getOdds());
                                             priceDto.setParticipantId(price.getParticipantId());
                                             priceDto.setHandicapValue(price.getHandicapValue());

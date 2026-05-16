@@ -1,7 +1,6 @@
 package com.bicosteve.api_gateway.models;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,7 +17,7 @@ import java.time.OffsetDateTime;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Price{
     private Integer         priceId;
-    private Integer         rundownId;
+//    private Integer         rundownId;
     private BigDecimal      price;
     private BigDecimal      priceDelta;
     private Integer         isMainLine;

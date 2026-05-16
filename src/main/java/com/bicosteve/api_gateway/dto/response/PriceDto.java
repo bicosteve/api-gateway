@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
 @AllArgsConstructor
@@ -14,7 +13,7 @@ import java.time.OffsetDateTime;
 @Data
 public class PriceDto{
     private Integer             priceId;
-    private Integer             rundownId;
+//    private Integer             rundownId;
     private BigDecimal          odds;
     private Integer             participantId;
     private String              handicapValue;

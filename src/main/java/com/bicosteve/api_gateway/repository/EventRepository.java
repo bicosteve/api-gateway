@@ -77,7 +77,7 @@ public class EventRepository{
                     pr.odds,
                     pr.participant_id AS price_participant_id,
                     pr.handicap_value,
-                    pr.line_id,
+                    pr.line_id AS price_line_id,
                     pr.closed_at AS price_closed_at
                 FROM (
                     SELECT * FROM rundown_event
@@ -157,7 +157,7 @@ public class EventRepository{
                     pr.odds,
                     pr.participant_id AS price_participant_id,
                     pr.handicap_value,
-                    pr.line_id,
+                    pr.line_id AS price_line_id,
                     pr.closed_at AS price_closed_at
                 FROM rundown_event e
                 LEFT JOIN teams t ON t.event_id = e.event_id
@@ -256,7 +256,7 @@ public class EventRepository{
                     BigDecimal priceOdd = rs.getBigDecimal("odds");
                     Integer priceParticipantId = rs.getInt("price_participant_id");
                     String handicapValue = rs.getString("handicap_value");
-                    String lineId = rs.getString("line_id");
+                    String lineId = rs.getString("price_line_id");
                     java.sql.Timestamp priceTimestamp = rs.getTimestamp("price_closed_at");
                     OffsetDateTime priceClosedAt = (priceTimestamp != null) ? priceTimestamp.toInstant().atOffset(ZoneOffset.UTC) : null;
 
@@ -287,11 +287,11 @@ public class EventRepository{
                             Price p = new Price();
 
                             p.setPriceId(priceId);
-                            p.setRundownId(priceRundownId);
+                            // p.setRundownId(priceRundownId);
                             p.setPrice(price);
                             p.setIsMainLine(isMainLine);
                             p.setOdds(priceOdd);
-                            p.setParticipantId(priceParticipantId);
+                            p.setParticipantId(participantRundownId);
                             p.setHandicapValue(handicapValue);
                             p.setLineId(lineId);
                             p.setClosedAt(priceClosedAt);
@@ -522,22 +522,22 @@ public class EventRepository{
 
                         // Set Price for participant
                         Integer priceId = rs.getInt("price_id");
-                        Integer priceRundownId = rs.getInt("price_rundown_id");
                         BigDecimal priceOdds = rs.getBigDecimal("odds");
                         String priceHandicapValue = rs.getString("handicap_value");
+                        String priceLineId = rs.getString("price_line_id");
+                        java.sql.Timestamp priceTimestamp = rs.getTimestamp("price_closed_at");
+                        OffsetDateTime priceClosedAt = (priceTimestamp != null) ? priceTimestamp.toInstant().atOffset(ZoneOffset.UTC) : null;
 
                         if(priceId != 0){
 
                             Price price = new Price();
 
                             price.setPriceId(priceId);
-                            price.setRundownId(priceRundownId);
                             price.setOdds(priceOdds);
+                            price.setParticipantId(participantRundownId);
                             price.setHandicapValue(priceHandicapValue);
-
-                            if(priceClosedAtTs != null){
-                                price.setClosedAt(priceClosedAtTs.toInstant().atOffset(ZoneOffset.UTC));
-                            }
+                            price.setLineId(priceLineId);
+                            price.setClosedAt(priceClosedAt);
 
                             participant.getPrices().add(price);
                         }
