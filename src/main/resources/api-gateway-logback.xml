@@ -74,7 +74,7 @@
         <queueSize>256</queueSize>
         <discardingThreshold>20</discardingThreshold>
     </appender>
-    
+
 
     <!-- Reduce Spring framework noise -->
     <logger name="org.springframework" level="WARN"/>

@@ -58,7 +58,7 @@ public class BetRepository{
             ps.setString(1, request.getProfileId());
             ps.setBigDecimal(2,BigDecimal.valueOf(request.getStake()));
             ps.setInt(3,request.getIsBonus());
-            ps.setInt(4,0);
+            ps.setInt(4,1); // 1 pending, 3 lost, 5 won, 7 void
             ps.setBigDecimal(5,request.getTotalOdds());
             ps.setBigDecimal(6,BigDecimal.valueOf(possibleWin));
 
