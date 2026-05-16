@@ -75,10 +75,11 @@ public class BetService{
         bet.setPossibleWin(BigDecimal.valueOf(possibleWin.doubleValue()));
         bet.setIsBonus(request.getIsBonus());
         bet.setTotalOdds(request.getTotalOdds());
+        bet.setStatus(1);
 
 
         // 08. Return the result of the operation if success
-        log.info("Placing bet for profile {} and bet {}",request.getProfileId(), bet);
+        log.info("Placing bet for profile {} and bet values={}",request.getProfileId(), bet);
         return this.betDtoMapper.toDto(bet);
     }
 
