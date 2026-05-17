@@ -6,13 +6,13 @@ import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 
 @Component
 public class SlipRowMapper implements RowMapper<Slip>{
 
     @Override
     public Slip mapRow(ResultSet rs, int rowNum) throws SQLException{
-
         Slip slip = new Slip();
 
         slip.setBetSlipId(rs.getInt("bet_slip_id"));
@@ -25,6 +25,9 @@ public class SlipRowMapper implements RowMapper<Slip>{
         slip.setParticipantName(rs.getString("participant_name"));
         slip.setOdds(rs.getBigDecimal("odds"));
         slip.setSpecialBetValue(rs.getString("special_bet_value"));
+        slip.setStatus(rs.getString("slip_status"));
+        slip.setCreatedAt(rs.getObject("created_at", LocalDateTime.class));
+        slip.setUpdatedAt(rs.getObject("updated_at", LocalDateTime.class));
 
         return slip;
     }

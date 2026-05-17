@@ -1,6 +1,7 @@
 package com.bicosteve.api_gateway.service;
 
 import com.bicosteve.api_gateway.dto.requests.BetRequest;
+import com.bicosteve.api_gateway.dto.requests.SlipRequest;
 import com.bicosteve.api_gateway.dto.response.BetDto;
 import com.bicosteve.api_gateway.exceptions.IllegalArgumentException;
 import com.bicosteve.api_gateway.mappers.dtomappers.BetDtoMapper;
@@ -32,36 +33,41 @@ public class BetService{
 
         request.setProfileId(profileId.toString());
 
-        // 02. Calculate the total odds
+        // 02. Check for duplicate eventId
+        if(request.hasDuplicateEvent()){
+            log.warn("Bet slip has duplicate event id");
+            throw new IllegalArgumentException("Cannot have more than one event id in bet slip");
+        }
+
+        // 03. Calculate the total odds
         request.calculateTotalOdds();
 
-        // 03. Ensure total odds is calculated to 2 decimal places
+        // 04. Ensure total odds is calculated to 2 decimal places
         if(request.getTotalOdds() != null){
             request.setTotalOdds(request.getTotalOdds().setScale(2, RoundingMode.HALF_UP));
         }
 
-        // 04. Make sure total odds is not less than 1.20
+        // 05. Make sure total odds is not less than 1.20
         if(request.getTotalOdds() == null || request.getTotalOdds().compareTo(new BigDecimal("1.2")) < 0){
             log.warn("Total odds must be greater than 1.2");
-            throw new java.lang.IllegalArgumentException("Total odds must be greater than 1.2");
+            throw new IllegalArgumentException("Total odds must be greater than 1.2");
         }
 
-        // 05. Calculate the possible win
+        // 06. Calculate the possible win
         BigDecimal stake = BigDecimal.valueOf(request.getStake()).setScale(2,RoundingMode.HALF_UP);
         BigDecimal possibleWin = request.getTotalOdds().multiply(stake).setScale(2, RoundingMode.HALF_UP);
 
-        // 06. Total Win should not be less than 0
+        // 07. Total Win should not be less than 0
         if(possibleWin.compareTo(BigDecimal.ONE) < 0){
             log.warn(
                     "Placing bet for profile {}. The possible win must be greater than {}",
                     request.getProfileId(),
                     possibleWin
             );
-
             throw new IllegalArgumentException("Possible win must be % and above ".formatted(1.0));
         }
 
-        // 07. Try inserting bet on the bets & bet_slips table
+        // 08. Try inserting bet on the bets & bet_slips table
         Long betId = this.betRepository.addBet(request,possibleWin.doubleValue());
         if(betId == null || betId < 1){
             log.warn("Profile {} placing bet. Bet did not go through", request.getProfileId());
@@ -78,7 +84,7 @@ public class BetService{
         bet.setStatus(1);
 
 
-        // 08. Return the result of the operation if success
+        // 09. Return the result of the operation if success
         log.info("Placing bet for profile {} and bet values={}",request.getProfileId(), bet);
         return this.betDtoMapper.toDto(bet);
     }
@@ -101,8 +107,6 @@ public class BetService{
 
         // STEP 02::Fetch the bet with its betId
         Bet bet = this.betRepository.fetchABet(profileId,betId);
-        log.info("Bet for profile {} and bet {}", profileId, bet);
-
         return this.betDtoMapper.toDto(bet);
     }
 }

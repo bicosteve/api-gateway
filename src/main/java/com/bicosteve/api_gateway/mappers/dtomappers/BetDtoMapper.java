@@ -41,6 +41,10 @@ public class BetDtoMapper{
                         slipDto.setMarketName(slip.getMarketName());
                         slipDto.setParticipantName(slip.getParticipantName());
                         slipDto.setOdds(slip.getOdds());
+                        slipDto.setSpecialBetValue(slip.getSpecialBetValue());
+                        slipDto.setStatus(slip.getStatus());
+                        slipDto.setCreatedAt(slip.getCreatedAt());
+                        slipDto.setUpdatedAt(slip.getUpdatedAt());
 
                         return slipDto;
 

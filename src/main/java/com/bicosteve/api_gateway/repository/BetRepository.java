@@ -115,10 +115,10 @@ public class BetRepository{
                     b.profile_id,
                     b.stake,
                     b.is_bonus,
-                    b.status,
+                    b.status AS bet_status,
                     b.total_odds,
                     b.possible_win,
-                    b.created_at,
+                    b.created_at AS bet_created_at,
                     s.bet_slip_id,
                     s.event_id,
                     s.sport_id,
@@ -128,7 +128,9 @@ public class BetRepository{
                     s.participant_name,
                     s.odds,
                     s.special_bet_value,
-                    s.status
+                    s.status AS slip_status,
+                    s.created_at slip_created_at,
+                    s.updated_at AS slip_updated_at
                 FROM (
                     SELECT
                         bet_id,
@@ -138,7 +140,8 @@ public class BetRepository{
                         status,
                         total_odds,
                         possible_win,
-                        created_at
+                        created_at,
+                        updated_at
                     FROM bets
                     WHERE profile_id = ?
                 """ + this.filterQuery(filter) + """
@@ -147,7 +150,7 @@ public class BetRepository{
                 ) b
                 LEFT JOIN bet_slips s
                 ON b.bet_id = s.bet_id
-                ORDER BY b.created_at DESC
+                ORDER BY b.updated_at DESC, s.updated_at DESC
                 """;
 
        return  this.jdbcTemplate.query(query,rs -> {
@@ -158,10 +161,10 @@ public class BetRepository{
                 Integer betProfileId = rs.getInt("profile_id");
                 BigDecimal stake = rs.getBigDecimal("stake");
                 Integer isBonus = rs.getInt("is_bonus");
-                Integer status = rs.getInt("status");
+                Integer status = rs.getInt("bet_status");
                 BigDecimal totalOdds = rs.getBigDecimal("total_odds");
                 BigDecimal possibleWin = rs.getBigDecimal("possible_win");
-                LocalDateTime createdAt = rs.getObject("created_at", LocalDateTime.class);
+                LocalDateTime createdAt = rs.getObject("bet_created_at", LocalDateTime.class);
 
                 Bet bet = betMap.computeIfAbsent(betId, id -> {
                     Bet b = new Bet();
@@ -191,7 +194,9 @@ public class BetRepository{
                 String participantName = rs.getString("participant_name");
                 BigDecimal odds = rs.getBigDecimal("odds");
                 String specialBetValue = rs.getString("special_bet_value");
-                String slipStatus = rs.getString("status");
+                String slipStatus = rs.getString("slip_status");
+                LocalDateTime slipCreatedAt = rs.getObject("slip_created_at",LocalDateTime.class);
+                LocalDateTime slipUpdatedAt = rs.getObject("slip_updated_at",LocalDateTime.class);
 
 
                 if(eventId != null){
@@ -209,6 +214,8 @@ public class BetRepository{
                     slip.setOdds(odds);
                     slip.setSpecialBetValue(specialBetValue);
                     slip.setStatus(slipStatus);
+                    slip.setCreatedAt(slipCreatedAt);
+                    slip.setUpdatedAt(slipUpdatedAt);
 
                     bet.getSlips().add(slip);
 
@@ -228,7 +235,7 @@ public class BetRepository{
                     profile_id,
                     stake,
                     is_bonus,
-                    status,
+                    status AS bet_status,
                     total_odds,
                     possible_win,
                     created_at
@@ -258,6 +265,9 @@ public class BetRepository{
                     participant_name,
                     odds,
                     special_bet_value,
+                    status AS slip_status,
+                    created_at,
+                    updated_at
                 FROM bet_slips
                 WHERE bet_id = ?
                 """;
