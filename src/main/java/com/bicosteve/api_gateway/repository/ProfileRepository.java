@@ -73,9 +73,8 @@ public class ProfileRepository{
                     phoneNumber
             );
 
-            log.info("Profile data {} ", profile);
-
-            return Optional.ofNullable(profile);
+            log.info("Profile phoneNumber={} ", phoneNumber);
+            return Optional.of(profile);
 
         } catch(EmptyResultDataAccessException e) {
             log.info("ProfileRepository::No profile found for {}",phoneNumber);

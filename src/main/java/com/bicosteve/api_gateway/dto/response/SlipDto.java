@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -22,4 +23,7 @@ public class SlipDto{
     private String          participantName;
     private BigDecimal      odds;
     private String          specialBetValue;
+    private String          status;
+    private LocalDateTime   createdAt;
+    private LocalDateTime   updatedAt;
 }
