@@ -3,10 +3,13 @@ package com.bicosteve.api_gateway.service;
 import com.bicosteve.api_gateway.dto.requests.BetRequest;
 import com.bicosteve.api_gateway.dto.requests.SlipRequest;
 import com.bicosteve.api_gateway.dto.response.BetDto;
+import com.bicosteve.api_gateway.exceptions.ExpiredEventException;
 import com.bicosteve.api_gateway.exceptions.IllegalArgumentException;
 import com.bicosteve.api_gateway.mappers.dtomappers.BetDtoMapper;
 import com.bicosteve.api_gateway.models.Bet;
+import com.bicosteve.api_gateway.models.Event;
 import com.bicosteve.api_gateway.repository.BetRepository;
+import com.bicosteve.api_gateway.repository.EventRepository;
 import com.bicosteve.api_gateway.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +18,10 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Service
@@ -23,7 +30,7 @@ import java.util.List;
 public class BetService{
     private final BetRepository betRepository;
     private final BetDtoMapper betDtoMapper;
-
+    private final EventRepository eventRepository;
 
 
     public BetDto placeBet(BetRequest request, Authentication authentication){
@@ -35,29 +42,32 @@ public class BetService{
 
         // 02. Check for duplicate eventId
         if(request.hasDuplicateEvent()){
-            log.warn("Bet slip has duplicate event id");
-            throw new IllegalArgumentException("Cannot have more than one event id in bet slip");
+            log.warn("Bet request has duplicate eventId");
+            throw new IllegalArgumentException("Cannot have duplicate eventId on a bet");
         }
 
-        // 03. Calculate the total odds
+        // 03. Check if the eventDate is still valid
+        this.validateBetSlip(request.getSlips());
+
+        // 04. Calculate the total odds
         request.calculateTotalOdds();
 
-        // 04. Ensure total odds is calculated to 2 decimal places
+        // 05. Ensure total odds is calculated to 2 decimal places
         if(request.getTotalOdds() != null){
             request.setTotalOdds(request.getTotalOdds().setScale(2, RoundingMode.HALF_UP));
         }
 
-        // 05. Make sure total odds is not less than 1.20
+        // 06. Make sure total odds is not less than 1.20
         if(request.getTotalOdds() == null || request.getTotalOdds().compareTo(new BigDecimal("1.2")) < 0){
             log.warn("Total odds must be greater than 1.2");
             throw new IllegalArgumentException("Total odds must be greater than 1.2");
         }
 
-        // 06. Calculate the possible win
+        // 07. Calculate the possible win
         BigDecimal stake = BigDecimal.valueOf(request.getStake()).setScale(2,RoundingMode.HALF_UP);
         BigDecimal possibleWin = request.getTotalOdds().multiply(stake).setScale(2, RoundingMode.HALF_UP);
 
-        // 07. Total Win should not be less than 0
+        // 08. Total Win should not be less than 0
         if(possibleWin.compareTo(BigDecimal.ONE) < 0){
             log.warn(
                     "Placing bet for profile {}. The possible win must be greater than {}",
@@ -67,7 +77,7 @@ public class BetService{
             throw new IllegalArgumentException("Possible win must be % and above ".formatted(1.0));
         }
 
-        // 08. Try inserting bet on the bets & bet_slips table
+        // 09. Try inserting bet on the bets & bet_slips table
         Long betId = this.betRepository.addBet(request,possibleWin.doubleValue());
         if(betId == null || betId < 1){
             log.warn("Profile {} placing bet. Bet did not go through", request.getProfileId());
@@ -83,8 +93,7 @@ public class BetService{
         bet.setTotalOdds(request.getTotalOdds());
         bet.setStatus(1);
 
-
-        // 09. Return the result of the operation if success
+        // 10. Return the result of the operation if success
         log.info("Placing bet for profile {} and bet values={}",request.getProfileId(), bet);
         return this.betDtoMapper.toDto(bet);
     }
@@ -108,5 +117,27 @@ public class BetService{
         // STEP 02::Fetch the bet with its betId
         Bet bet = this.betRepository.fetchABet(profileId,betId);
         return this.betDtoMapper.toDto(bet);
+    }
+
+    private void validateBetSlip(List<SlipRequest> slips){
+        OffsetDateTime utcTimeNow = OffsetDateTime.now(Clock.systemUTC());
+        for(SlipRequest slip : slips){
+            Event event = this.eventRepository.fetchOneEvent(slip.getEventId());
+            if(event == null){
+                log.warn("Event with id {} not found", slip.getEventId());
+                throw new IllegalArgumentException("Event with id=%s does not exist"
+                        .formatted(slip.getEventId()));
+            }
+
+            if(event.getEventDate().isBefore(utcTimeNow)){
+                log.warn(
+                        "Event with id={} already started at {}",
+                        slip.getEventId(),
+                        event.getEventDate()
+                );
+                throw new ExpiredEventException("Event with id=%s has expired"
+                        .formatted(slip.getEventId()));
+            }
+        }
     }
 }

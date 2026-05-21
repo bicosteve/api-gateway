@@ -191,6 +191,18 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error,HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(ExpiredEventException.class)
+    public ResponseEntity<ErrorResponse> handleExpiredEventException(ExpiredEventException ex){
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                this.getCurrentTimestamp(),
+                null
+        );
+
+        return new ResponseEntity<>(error,HttpStatus.BAD_REQUEST);
+    }
+
 
 }
 

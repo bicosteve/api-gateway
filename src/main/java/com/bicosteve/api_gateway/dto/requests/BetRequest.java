@@ -58,7 +58,6 @@ public class BetRequest{
 
     public boolean hasDuplicateEvent(){
         Set<String> eventIds = new HashSet<>();
-
         for(SlipRequest slip : slips){
             if(!eventIds.add(slip.getEventId())){
                 return true;
@@ -66,4 +65,5 @@ public class BetRequest{
         }
         return false;
     }
+
 }
