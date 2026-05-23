@@ -1,6 +1,6 @@
 package com.bicosteve.api_gateway.service;
 
-import com.bicosteve.api_gateway.dto.response.EventDto;
+import com.bicosteve.api_gateway.dto.response.EventResponse;
 import com.bicosteve.api_gateway.exceptions.EventNotFoundException;
 import com.bicosteve.api_gateway.mappers.dtomappers.EventDtoMapper;
 import com.bicosteve.api_gateway.models.Event;
@@ -18,7 +18,7 @@ public class EventService{
     private final EventRepository eventRepository;
     private final EventDtoMapper eventDtoMapper;
 
-    public List<EventDto> getEvents(int limit, int offset){
+    public List<EventResponse> getEvents(int limit, int offset){
         List<Event> events = this.eventRepository.fetchEvents(limit,offset);
         return events.stream()
                 .map(this.eventDtoMapper::toDto)
@@ -26,7 +26,7 @@ public class EventService{
     }
 
 
-    public EventDto getEvent(String eventId){
+    public EventResponse getEvent(String eventId){
         Event event = this.eventRepository.fetchOneEvent(eventId);
         if(event == null){
             log.warn("No event with id {} was found", eventId);

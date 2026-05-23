@@ -14,7 +14,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class BetDto{
+public class BetResponse {
     private Integer                 betId;
     private Integer                 profiledId;
     private BigDecimal              stake;
@@ -24,6 +24,6 @@ public class BetDto{
     private BigDecimal              totalOdds;
     private LocalDateTime           createdAt;
 
-    private List<SlipDto> slips =   new ArrayList<>();
+    private List<SlipResponse> slips =   new ArrayList<>();
 
 }

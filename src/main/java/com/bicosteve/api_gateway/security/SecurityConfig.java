@@ -55,7 +55,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST,"/api/auth/refresh").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/auth/test").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/events/**").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers(
+                                "/h2-console/**",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html"
+                                ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers.frameOptions(frame -> frame.disable()))

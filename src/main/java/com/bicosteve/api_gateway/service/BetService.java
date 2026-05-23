@@ -2,7 +2,7 @@ package com.bicosteve.api_gateway.service;
 
 import com.bicosteve.api_gateway.dto.requests.BetRequest;
 import com.bicosteve.api_gateway.dto.requests.SlipRequest;
-import com.bicosteve.api_gateway.dto.response.BetDto;
+import com.bicosteve.api_gateway.dto.response.BetResponse;
 import com.bicosteve.api_gateway.exceptions.ExpiredEventException;
 import com.bicosteve.api_gateway.exceptions.IllegalArgumentException;
 import com.bicosteve.api_gateway.mappers.dtomappers.BetDtoMapper;
@@ -19,8 +19,6 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -33,7 +31,7 @@ public class BetService{
     private final EventRepository eventRepository;
 
 
-    public BetDto placeBet(BetRequest request, Authentication authentication){
+    public BetResponse placeBet(BetRequest request, Authentication authentication){
         // 01. Get profileId from the Authenticated user
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         Long profileId = userDetails.getProfileId();
@@ -98,7 +96,7 @@ public class BetService{
         return this.betDtoMapper.toDto(bet);
     }
 
-    public List<BetDto> getBets(String filter, int page, int size, Authentication auth){
+    public List<BetResponse> getBets(String filter, int page, int size, Authentication auth){
         // STEP 01::Get profileId from the authenticated user
         CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
         Long profileId = userDetails.getProfileId();
@@ -109,7 +107,7 @@ public class BetService{
         return bets.stream().map(this.betDtoMapper::toDto).toList();
     }
 
-    public BetDto getBet(Long betId, Authentication auth){
+    public BetResponse getBet(Long betId, Authentication auth){
         // STEP 01::Get profileId from the authenticated user
         CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
         Long profileId = userDetails.getProfileId();

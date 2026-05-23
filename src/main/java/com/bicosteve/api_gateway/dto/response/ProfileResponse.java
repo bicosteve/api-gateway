@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class ProfileDto {
+public class ProfileResponse {
     private Long profileId;
     private String phoneNumber;
 

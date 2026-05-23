@@ -10,12 +10,12 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class MarketDto{
+public class MarketResponse {
     private Integer                             marketRundownId;
     private Integer                             marketTypeId;
     private Integer                             periodId;
     private String                              name;
 
-    private List<ParticipantDto> participants = new ArrayList<>();
+    private List<ParticipantResponse> participants = new ArrayList<>();
 
 }

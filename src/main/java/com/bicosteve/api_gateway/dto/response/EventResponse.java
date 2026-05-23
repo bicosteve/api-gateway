@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class EventDto{
+public class EventResponse {
     private String                      eventId;
     private Integer                     sportId;
     private OffsetDateTime              eventDate;
@@ -21,8 +21,8 @@ public class EventDto{
     private String                      eventName;
     private Integer                     eventStatus;
 
-    private List<TeamDto>   teams =     new ArrayList<>();
-    private List<MarketDto> markets =   new ArrayList<>();
-    private ScoreDto                    score;
+    private List<TeamResponse>   teams =     new ArrayList<>();
+    private List<MarketResponse> markets =   new ArrayList<>();
+    private ScoreResponse score;
 
 }

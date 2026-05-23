@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Data
 @Builder
-public class SlipDto{
+public class SlipResponse {
     private Long            betSlipId;
     private Long            betId;
     private String          eventId;

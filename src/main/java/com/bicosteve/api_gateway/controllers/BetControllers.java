@@ -1,7 +1,7 @@
 package com.bicosteve.api_gateway.controllers;
 
 import com.bicosteve.api_gateway.dto.requests.BetRequest;
-import com.bicosteve.api_gateway.dto.response.BetDto;
+import com.bicosteve.api_gateway.dto.response.BetResponse;
 import com.bicosteve.api_gateway.service.BetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,12 +23,12 @@ public class BetControllers{
     private final BetService betService;
 
     @PostMapping("/create")
-    public ResponseEntity<Map<String, BetDto>> bet(
+    public ResponseEntity<Map<String, BetResponse>> bet(
             @Valid @RequestBody BetRequest request,
             Authentication authentication
         ){
 
-        BetDto bet = this.betService.placeBet(request, authentication);
+        BetResponse bet = this.betService.placeBet(request, authentication);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("details",bet));
     }
@@ -43,7 +43,7 @@ public class BetControllers{
 
         String[] validFilters = {"all","day","week","month"};
         if(Arrays.asList(validFilters).contains(filter.toLowerCase())){
-            List<BetDto> bets = this.betService.getBets(filter,page,size,authentication);
+            List<BetResponse> bets = this.betService.getBets(filter,page,size,authentication);
             return ResponseEntity.status(HttpStatus.OK).body(bets);
         }
 
@@ -51,7 +51,7 @@ public class BetControllers{
      }
 
      @GetMapping("/{betId}")
-    public ResponseEntity<BetDto> getOneBet(@PathVariable Long betId, Authentication authentication){
+    public ResponseEntity<BetResponse> getOneBet(@PathVariable Long betId, Authentication authentication){
         return ResponseEntity.status(HttpStatus.OK).body(this.betService.getBet(betId,authentication));
      }
 }

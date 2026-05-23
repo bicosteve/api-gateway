@@ -4,7 +4,10 @@ import com.bicosteve.api_gateway.dto.requests.LoginRequest;
 import com.bicosteve.api_gateway.dto.requests.MailRequest;
 import com.bicosteve.api_gateway.dto.requests.RegisterRequest;
 import com.bicosteve.api_gateway.dto.requests.VerifyRequest;
-import com.bicosteve.api_gateway.dto.response.ProfileDto;
+import com.bicosteve.api_gateway.dto.response.LoginResponse;
+import com.bicosteve.api_gateway.dto.response.ProfileResponse;
+import com.bicosteve.api_gateway.dto.response.RegisterResponse;
+import com.bicosteve.api_gateway.dto.response.VerificationResponse;
 import com.bicosteve.api_gateway.exceptions.InvalidOtpException;
 import com.bicosteve.api_gateway.exceptions.PhoneNumberExistsException;
 import com.bicosteve.api_gateway.exceptions.PhoneNumberNotFoundException;
@@ -25,7 +28,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -45,7 +47,7 @@ public class ProfileService {
     * @param id the profile_id to search for
     * @return Optional containing the profile found or empty if not
     * */
-    public ProfileDto getProfileById(Long id){
+    public ProfileResponse getProfileById(Long id){
         Profile profile = this.profileRepository.findById(id)
                         .orElseThrow(() -> new ProfileNotFoundException(id));
         // 00. Convert model to DTO hiding internal fields
@@ -58,11 +60,11 @@ public class ProfileService {
      * CreateProfile
      * @param RegisterRequest which has the phone_number and password to insert
      * */
-    public Map<String,String> createProfile(RegisterRequest request){
+    public RegisterResponse createProfile(RegisterRequest request){
         // 01. Check if the phone number exists in DB.
         // Throw error if exists to avoid duplicate registration.
         if(this.profileRepository.existsByPhoneNumber(request.getPhoneNumber())){
-            log.warn("ProfileService::createProfile: Phone number {} already exists", request.getPhoneNumber());
+            log.warn("Phone number {} already exists", request.getPhoneNumber());
             throw new PhoneNumberExistsException(request.getPhoneNumber());
         }
 
@@ -88,21 +90,20 @@ public class ProfileService {
 
         // 06. Return a map of message of success and otp
         log.info(
-                "ProfileService::Verification OTP sent to {} email",
+                "Verification OTP sent to {} email",
                 request.getEmail()
         );
 
-        return Map.of(
-                "message","Registration success",
-                "verification_code",otp
-        );
+        return RegisterResponse.builder()
+                .message("Registration success")
+                .verificationCode(otp).build();
     }
 
     /*
      * @verifyProfile
      * @param RegisterRequest which has the phone_number and password to insert
      * */
-    public Map<String,String> verifyProfile(VerifyRequest request){
+    public VerificationResponse verifyProfile(VerifyRequest request){
         Profile profile = this.profileRepository.
                 findByPhoneNumber(request.getPhoneNumber())
                 .orElseThrow(() -> new PhoneNumberNotFoundException(
@@ -125,7 +126,9 @@ public class ProfileService {
 
         this.profileRepository.updateProfileStatus(1, 1, profile.getProfileId());
 
-        return Map.of("msg","account verified");
+        return VerificationResponse.builder()
+                .message("Profile verified")
+                .build();
     }
 
     /*
@@ -133,7 +136,7 @@ public class ProfileService {
     * @param LoginRequest
     * @param HttpServletResponse
     * */
-    public Map<String, String> generateLoginToken(LoginRequest request, HttpServletResponse response){
+    public LoginResponse generateLoginToken(LoginRequest request, HttpServletResponse response){
         // 01. Check if the profile exists in the db
         Profile profile = this.profileRepository.findByPhoneNumber(request.getPhoneNumber())
                 .orElseThrow(() -> new PhoneNumberNotFoundException(request.getPhoneNumber()));
@@ -159,7 +162,10 @@ public class ProfileService {
         cookie.setSecure(false); // TODO -> Set to true in prod
         response.addCookie(cookie);
 
-        return Map.of("access_token",accessToken, "refresh_token",refreshToken);
+        return LoginResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken).build();
+
     }
 
 }

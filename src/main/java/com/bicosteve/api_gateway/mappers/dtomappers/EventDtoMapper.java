@@ -14,11 +14,11 @@ import java.util.List;
 @Slf4j
 public class EventDtoMapper{
 
-    public EventDto toDto(Event event){
+    public EventResponse toDto(Event event){
         if(event == null) return null;
 
         // 01. Set event's details
-        EventDto dto = new EventDto();
+        EventResponse dto = new EventResponse();
 
         dto.setEventId(event.getEventId());
         dto.setSportId(event.getSportId());
@@ -31,17 +31,17 @@ public class EventDtoMapper{
 
         // 02. Check and set teams for an event
         if(event.getTeams() != null){
-            List<TeamDto> teamsDto = event.getTeams().stream()
+            List<TeamResponse> teamsDto = event.getTeams().stream()
                     .map(team -> {
-                        TeamDto teamDto = new TeamDto();
-                        teamDto.setId(team.getId());
-                        teamDto.setTeamId(team.getTeamId());
-                        teamDto.setName(team.getName());
-                        teamDto.setIsHome(team.getIsHome());
-                        teamDto.setIsAway(team.getIsAway());
-                        teamDto.setLeagueName(team.getLeagueName());
+                        TeamResponse teamResponse = new TeamResponse();
+                        teamResponse.setId(team.getId());
+                        teamResponse.setTeamId(team.getTeamId());
+                        teamResponse.setName(team.getName());
+                        teamResponse.setIsHome(team.getIsHome());
+                        teamResponse.setIsAway(team.getIsAway());
+                        teamResponse.setLeagueName(team.getLeagueName());
 
-                        return teamDto;
+                        return teamResponse;
                     }).toList();
 
             dto.setTeams(teamsDto);
@@ -49,57 +49,57 @@ public class EventDtoMapper{
 
         // 03. Check and set markets for an event
         if(event.getMarkets() != null){
-            List<MarketDto> marketsDto = event.getMarkets().stream()
+            List<MarketResponse> marketsDto = event.getMarkets().stream()
                     .map(market -> {
-                        MarketDto marketDto = new MarketDto();
+                        MarketResponse marketResponse = new MarketResponse();
 
-                        marketDto.setMarketRundownId(market.getMarketRundownId());
-                        marketDto.setMarketTypeId(market.getMarketTypeId());
-                        marketDto.setPeriodId(market.getPeriodId());
-                        marketDto.setName(market.getName());
+                        marketResponse.setMarketRundownId(market.getMarketRundownId());
+                        marketResponse.setMarketTypeId(market.getMarketTypeId());
+                        marketResponse.setPeriodId(market.getPeriodId());
+                        marketResponse.setName(market.getName());
 
 
                         // 04. Check and set participants for market
                         if(market.getParticipants() != null){
-                            List<ParticipantDto> participantsDto = market.getParticipants().stream()
+                            List<ParticipantResponse> participantsDto = market.getParticipants().stream()
                                     .map(participant -> {
-                                        ParticipantDto participantDto = new ParticipantDto();
+                                        ParticipantResponse participantResponse = new ParticipantResponse();
 
-                                        participantDto.setParticipantId(participant.getParticipantId());
-                                        participantDto.setRundownId(participant.getRundownId());
-                                        participantDto.setType(participant.getType());
-                                        participantDto.setName(participant.getName());
-                                        participantDto.setMarketId(participant.getMarketId());
+                                        participantResponse.setParticipantId(participant.getParticipantId());
+                                        participantResponse.setRundownId(participant.getRundownId());
+                                        participantResponse.setType(participant.getType());
+                                        participantResponse.setName(participant.getName());
+                                        participantResponse.setMarketId(participant.getMarketId());
 
                                         // 05. Check & set price for participants
                                         if(participant.getPrices() != null && !participant.getPrices().isEmpty()){
 
                                             Price price = participant.getPrices().get(0);
 
-                                            PriceDto priceDto = new PriceDto();
-                                            priceDto.setPriceId(price.getPriceId());
-                                            // priceDto.setRundownId(price.getRundownId());
-                                            priceDto.setOdds(price.getOdds());
-                                            priceDto.setParticipantId(price.getParticipantId());
-                                            priceDto.setHandicapValue(price.getHandicapValue());
-                                            priceDto.setLineId(price.getLineId());
-                                            priceDto.setClosedAt(price.getClosedAt());
+                                            PriceResponse priceResponse = new PriceResponse();
+                                            priceResponse.setPriceId(price.getPriceId());
+                                            // priceResponse.setRundownId(price.getRundownId());
+                                            priceResponse.setOdds(price.getOdds());
+                                            priceResponse.setParticipantId(price.getParticipantId());
+                                            priceResponse.setHandicapValue(price.getHandicapValue());
+                                            priceResponse.setLineId(price.getLineId());
+                                            priceResponse.setClosedAt(price.getClosedAt());
 
-                                            participantDto.setPrices(List.of(priceDto));
+                                            participantResponse.setPrices(List.of(priceResponse));
 
                                         } else {
-                                            participantDto.setPrices(new ArrayList<>());
+                                            participantResponse.setPrices(new ArrayList<>());
                                         }
 
-                                        return participantDto;
+                                        return participantResponse;
 
                                     }).toList();
 
 
-                            marketDto.setParticipants(participantsDto);
+                            marketResponse.setParticipants(participantsDto);
                         }
 
-                        return marketDto;
+                        return marketResponse;
 
 
                     }).toList();
@@ -109,16 +109,16 @@ public class EventDtoMapper{
 
         // 06. Check & set scores for the event
         if(event.getScore() != null){
-            ScoreDto scoreDto = new ScoreDto();
+            ScoreResponse scoreResponse = new ScoreResponse();
 
-            scoreDto.setId(event.getScore().getId());
-            scoreDto.setEventStatus(event.getScore().getEventStatus());
-            scoreDto.setScoreAway(event.getScore().getScoreAway());
-            scoreDto.setScoreHome(event.getScore().getScoreHome());
-            scoreDto.setGameClock(event.getScore().getGameClock());
-            scoreDto.setGamePeriod(event.getScore().getGamePeriod());
+            scoreResponse.setId(event.getScore().getId());
+            scoreResponse.setEventStatus(event.getScore().getEventStatus());
+            scoreResponse.setScoreAway(event.getScore().getScoreAway());
+            scoreResponse.setScoreHome(event.getScore().getScoreHome());
+            scoreResponse.setGameClock(event.getScore().getGameClock());
+            scoreResponse.setGamePeriod(event.getScore().getGamePeriod());
 
-            dto.setScore(scoreDto);
+            dto.setScore(scoreResponse);
         }
 
         return dto;

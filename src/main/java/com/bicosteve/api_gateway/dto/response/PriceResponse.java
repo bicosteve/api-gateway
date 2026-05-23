@@ -11,7 +11,7 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class PriceDto{
+public class PriceResponse {
     private Integer             priceId;
 //    private Integer             rundownId;
     private BigDecimal          odds;

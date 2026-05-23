@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class ScoreDto{
+public class ScoreResponse {
     private Long            id;
     private Integer         eventStatus;
     private Integer         scoreAway;
