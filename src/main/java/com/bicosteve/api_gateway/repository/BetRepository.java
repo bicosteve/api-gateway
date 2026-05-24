@@ -55,7 +55,7 @@ public class BetRepository{
         int affectedRows = this.jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sql, new String[]{"bet_id"});
 
-            ps.setString(1, request.getProfileId());
+            ps.setLong(1, request.getProfileId());
             ps.setBigDecimal(2,BigDecimal.valueOf(request.getStake()));
             ps.setInt(3,request.getIsBonus());
             ps.setInt(4,1); // 1 pending, 3 lost, 5 won, 7 void
@@ -108,7 +108,7 @@ public class BetRepository{
                 });
     }
 
-    public List<Bet> fetchBets(Long profileId, String filter, int page, int size){
+    public List<Bet> fetchBets(Long profileId, String filter, int limit, int offset){
         String query = """
                 SELECT
                     b.bet_id,
@@ -158,7 +158,7 @@ public class BetRepository{
 
             while(rs.next()){
                 Long betId = rs.getLong("bet_id");
-                Integer betProfileId = rs.getInt("profile_id");
+                Long betProfileId = rs.getLong("profile_id");
                 BigDecimal stake = rs.getBigDecimal("stake");
                 Integer isBonus = rs.getInt("is_bonus");
                 Integer status = rs.getInt("bet_status");
@@ -224,7 +224,7 @@ public class BetRepository{
             }
 
             return new ArrayList<>(betMap.values());
-        }, profileId, size, page * size);
+        }, profileId, limit, offset);
     }
 
     public Bet fetchABet(Long profileId, Long betId){

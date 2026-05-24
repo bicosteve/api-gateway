@@ -18,7 +18,7 @@ public class BetDtoMapper{
         BetResponse dto = new BetResponse();
 
         dto.setBetId(bet.getBetId());
-        dto.setProfiledId(bet.getProfileId());
+        dto.setProfileId(bet.getProfileId());
         dto.setStake(bet.getStake());
         dto.setIsBonus(bet.getIsBonus());
         dto.setStatus(bet.getStatus() != null ? bet.getStatus() : 0);

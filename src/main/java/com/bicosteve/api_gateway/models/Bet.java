@@ -17,7 +17,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Bet{
     private Integer         betId;
-    private Integer         profileId;
+    private Long            profileId;
     private BigDecimal      stake;
     private Integer         isBonus;
     private Integer         status;

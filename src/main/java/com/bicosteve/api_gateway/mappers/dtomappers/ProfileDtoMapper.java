@@ -1,7 +1,7 @@
 package com.bicosteve.api_gateway.mappers.dtomappers;
 
 import com.bicosteve.api_gateway.dto.response.ProfileResponse;
-import com.bicosteve.api_gateway.dto.response.ProfileSettingsDto;
+import com.bicosteve.api_gateway.dto.response.ProfileSettingsResponse;
 import com.bicosteve.api_gateway.models.Profile;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +17,7 @@ public class ProfileDtoMapper{
 
         // Map settings to do if setting exists
         if(profile.getProfileSettings() != null){
-            ProfileSettingsDto settingsDto = new ProfileSettingsDto();
+            ProfileSettingsResponse settingsDto = new ProfileSettingsResponse();
             settingsDto.setStatus(profile.getProfileSettings().getStatus());
             settingsDto.setIsVerified(profile.getProfileSettings().getIsVerified());
 

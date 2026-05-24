@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class VerifyRequest {
     @Schema(example = "254701234567")
     @NotBlank(message = "Phone number is required")
-    @Size(max = 10, message = "Phone number must be exactly 10 characters")
+    @Size(max = 12, message = "Phone number must be exactly 12 characters")
     @ValidPhoneNumber
     @JsonProperty("phone_number")
     private String phoneNumber;

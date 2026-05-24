@@ -8,9 +8,11 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-@Schema(description = "Checking if the api is up and running")
+@Schema(description = "Test response object")
 public class TestResponse {
     @Schema(example = "App is running")
     private String message;
+
+    @Schema(example = "2026-05-07 04:46:31")
     private LocalDateTime timestamp;
 }

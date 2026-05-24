@@ -1,7 +1,9 @@
 package com.bicosteve.api_gateway.dto.requests;
 
 import com.bicosteve.api_gateway.validation.UniqueSlip;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -21,26 +23,55 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BetRequest{
-    private String profileId;
+    @JsonIgnore
+    private Long profileId;
 
-    @NotBlank(message = "Stake is required")
+    @NotNull(message = "Stake is required")
+    @DecimalMin(value="2.0", message = "Stake must be greater than 2.0")
     @JsonProperty("stake")
+    @Schema(example = "2.0")
     private Double stake;
 
-    @NotNull(message = "Total odds is required")
-    @DecimalMin(value="1.2", inclusive = false, message = "Total odds must be greater than 1.2")
-    @JsonProperty("total_odds")
+    @JsonIgnore
     private BigDecimal totalOdds;
 
-    @NotBlank(message = "Token is required")
-    @JsonProperty("token")
-    private String token;
-
-    @NotBlank(message = "isBonus is required")
+    @NotNull(message = "isBonus is required")
     @JsonProperty("is_bonus")
+    @Schema(example = "0")
     private Integer isBonus;
 
     @Size(min=1,max = 10, message = "selections must be between 1 and 10")
+    @Schema(description = "List of bet selections, minimum 1 and maximum 10",
+            minLength = 1,
+            maxLength = 10,
+            example = """
+            [
+              {
+                "eventId": "2defa5f34847147c70718b2fc6d2fa9a",
+                "teamId": 11196,
+                "marketId": 1,
+                "marketName": "moneyline",
+                "odds": 3.50,
+                "specialBetValue": ""
+              },
+              {
+                "eventId": "9c0dc8eb5c35ff4fe656d5013f27f4f6",
+                "teamId": 1234,
+                "marketId": 2,
+                "marketName": "handicap",
+                "odds": 2.91,
+                "specialBetValue": "hcp=2.5"
+              },
+              {
+                "eventId": "9c0dc8eb5c35ff4fe656d5013f27f4f9",
+                "teamId": 9,
+                "marketId": 3,
+                "marketName": "totals",
+                "odds": 1.91,
+                "specialBetValue": "totals=2.5"
+              }
+            ]
+            """)
     private List<SlipRequest> slips;
 
     public void calculateTotalOdds(){

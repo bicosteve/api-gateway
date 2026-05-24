@@ -8,9 +8,6 @@ import lombok.Data;
 @Builder
 @Schema(description = "Server error response")
 public class ServerErrorResponse {
-    @Schema(example = "500")
-    private String statusCode;
-
     @Schema(example = "Internal server error")
     private String message;
 }
