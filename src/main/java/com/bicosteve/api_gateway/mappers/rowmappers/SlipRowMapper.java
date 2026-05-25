@@ -25,7 +25,7 @@ public class SlipRowMapper implements RowMapper<Slip>{
         slip.setParticipantName(rs.getString("participant_name"));
         slip.setOdds(rs.getBigDecimal("odds"));
         slip.setSpecialBetValue(rs.getString("special_bet_value"));
-        slip.setStatus(rs.getString("slip_status"));
+        slip.setStatus(rs.getInt("slip_status"));
         slip.setCreatedAt(rs.getObject("created_at", LocalDateTime.class));
         slip.setUpdatedAt(rs.getObject("updated_at", LocalDateTime.class));
 

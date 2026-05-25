@@ -2,7 +2,9 @@ package com.bicosteve.api_gateway.service;
 
 import com.bicosteve.api_gateway.dto.requests.BetRequest;
 import com.bicosteve.api_gateway.dto.requests.SlipRequest;
-import com.bicosteve.api_gateway.dto.response.BetDto;
+import com.bicosteve.api_gateway.dto.response.BetResponse;
+import com.bicosteve.api_gateway.dto.response.PageResponse;
+import com.bicosteve.api_gateway.exceptions.BetNotFoundException;
 import com.bicosteve.api_gateway.exceptions.ExpiredEventException;
 import com.bicosteve.api_gateway.exceptions.IllegalArgumentException;
 import com.bicosteve.api_gateway.mappers.dtomappers.BetDtoMapper;
@@ -19,8 +21,6 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -33,12 +33,12 @@ public class BetService{
     private final EventRepository eventRepository;
 
 
-    public BetDto placeBet(BetRequest request, Authentication authentication){
+    public BetResponse placeBet(BetRequest request, Authentication authentication){
         // 01. Get profileId from the Authenticated user
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         Long profileId = userDetails.getProfileId();
 
-        request.setProfileId(profileId.toString());
+        request.setProfileId(profileId);
 
         // 02. Check for duplicate eventId
         if(request.hasDuplicateEvent()){
@@ -85,8 +85,8 @@ public class BetService{
         }
 
         Bet bet = new Bet();
-        bet.setBetId(betId.intValue());
-        bet.setProfileId(Integer.valueOf(request.getProfileId()));
+        bet.setBetId(betId);
+        bet.setProfileId(request.getProfileId());
         bet.setStake(BigDecimal.valueOf(request.getStake()));
         bet.setPossibleWin(BigDecimal.valueOf(possibleWin.doubleValue()));
         bet.setIsBonus(request.getIsBonus());
@@ -94,28 +94,52 @@ public class BetService{
         bet.setStatus(1);
 
         // 10. Return the result of the operation if success
-        log.info("Placing bet for profile {} and bet values={}",request.getProfileId(), bet);
+        log.info("Placing bet for profile={} and bet values={}",request.getProfileId(), bet);
         return this.betDtoMapper.toDto(bet);
     }
 
-    public List<BetDto> getBets(String filter, int page, int size, Authentication auth){
+    public PageResponse<BetResponse> getBets(String filter, int page, int size, Authentication auth){
         // STEP 01::Get profileId from the authenticated user
         CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
         Long profileId = userDetails.getProfileId();
 
-        // STEP 02::Fetch the bets based on the filters and page size
-        List<Bet> bets = this.betRepository.fetchBets(profileId,filter,page,size);
+        // STEP 02::Calculate offset from page and size
+        int offset = page * size;
 
-        return bets.stream().map(this.betDtoMapper::toDto).toList();
+        // STEP 03::Fetch size + 1 to detect hasNext
+        List<Bet> bets = this.betRepository.fetchBets(profileId,filter,size+1,offset);
+
+        // STEP 04::Check if there is a next page
+        boolean hasNext = bets.size() > size;
+
+        // STEP 05::Trim back to requested size
+        List<BetResponse> data = bets.stream()
+                .limit(size)
+                .map(this.betDtoMapper::toDto)
+                .toList();
+
+        // STEP 06::Build and return page response
+        return PageResponse.<BetResponse>builder()
+                .data(data)
+                .page(page)
+                .limit(size)
+                .hasNext(hasNext)
+                .hasPrevious(page > 0)
+                .build();
+
     }
 
-    public BetDto getBet(Long betId, Authentication auth){
+    public BetResponse getBet(Long betId, Authentication auth){
         // STEP 01::Get profileId from the authenticated user
         CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
         Long profileId = userDetails.getProfileId();
 
         // STEP 02::Fetch the bet with its betId
         Bet bet = this.betRepository.fetchABet(profileId,betId);
+        if(bet == null){
+            throw new BetNotFoundException(betId.toString());
+        }
+
         return this.betDtoMapper.toDto(bet);
     }
 

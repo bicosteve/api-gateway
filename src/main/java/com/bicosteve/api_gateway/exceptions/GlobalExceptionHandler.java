@@ -1,6 +1,7 @@
 package com.bicosteve.api_gateway.exceptions;
 
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -13,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     private String getCurrentTimestamp(){
@@ -201,6 +203,31 @@ public class GlobalExceptionHandler {
         );
 
         return new ResponseEntity<>(error,HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(BadSqlGrammaException.class)
+    public ResponseEntity<ErrorResponse> handleBadSqlGrammar(BadSqlGrammaException ex){
+        log.error("Bad sql grammar {}",ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ErrorResponse.builder()
+                        .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                        .message("A database error occurred")
+                        .timestamp(this.getCurrentTimestamp())
+                        .build());
+    }
+
+
+    @ExceptionHandler(BetNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleBetNotFound(BetNotFoundException ex){
+        log.error("Bet not found {}",ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.builder()
+                        .status(HttpStatus.NOT_FOUND.value())
+                        .message(ex.getMessage())
+                        .timestamp(this.getCurrentTimestamp())
+                        .build());
     }
 
 

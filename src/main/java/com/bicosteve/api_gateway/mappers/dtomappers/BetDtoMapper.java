@@ -1,7 +1,7 @@
 package com.bicosteve.api_gateway.mappers.dtomappers;
 
-import com.bicosteve.api_gateway.dto.response.BetDto;
-import com.bicosteve.api_gateway.dto.response.SlipDto;
+import com.bicosteve.api_gateway.dto.response.BetResponse;
+import com.bicosteve.api_gateway.dto.response.SlipResponse;
 import com.bicosteve.api_gateway.models.Bet;
 import org.springframework.stereotype.Component;
 
@@ -10,15 +10,15 @@ import java.util.List;
 @Component
 public class BetDtoMapper{
 
-    public BetDto toDto(Bet bet){
+    public BetResponse toDto(Bet bet){
         if(bet == null) return null;
 
         // Set bet details
 
-        BetDto dto = new BetDto();
+        BetResponse dto = new BetResponse();
 
         dto.setBetId(bet.getBetId());
-        dto.setProfiledId(bet.getProfileId());
+        dto.setProfileId(bet.getProfileId());
         dto.setStake(bet.getStake());
         dto.setIsBonus(bet.getIsBonus());
         dto.setStatus(bet.getStatus() != null ? bet.getStatus() : 0);
@@ -28,25 +28,25 @@ public class BetDtoMapper{
         dto.setCreatedAt(bet.getCreatedAt());
 
         if(bet.getSlips() != null){
-            List<SlipDto> slipsDto = bet.getSlips().stream()
+            List<SlipResponse> slipsDto = bet.getSlips().stream()
                     .map(slip -> {
-                        SlipDto slipDto = new SlipDto();
+                        SlipResponse slipResponse = new SlipResponse();
 
-                        slipDto.setBetSlipId(Long.valueOf(slip.getBetSlipId()));
-                        slipDto.setBetId(Long.valueOf(slip.getBetId()));
-                        slipDto.setEventId(slip.getEventId());
-                        slipDto.setSportId(slip.getSportId());
-                        slipDto.setTeamId(slip.getTeamId());
-                        slipDto.setMarketId(slip.getMarketId());
-                        slipDto.setMarketName(slip.getMarketName());
-                        slipDto.setParticipantName(slip.getParticipantName());
-                        slipDto.setOdds(slip.getOdds());
-                        slipDto.setSpecialBetValue(slip.getSpecialBetValue());
-                        slipDto.setStatus(slip.getStatus());
-                        slipDto.setCreatedAt(slip.getCreatedAt());
-                        slipDto.setUpdatedAt(slip.getUpdatedAt());
+                        slipResponse.setBetSlipId(Long.valueOf(slip.getBetSlipId()));
+                        slipResponse.setBetId(Long.valueOf(slip.getBetId()));
+                        slipResponse.setEventId(slip.getEventId());
+                        slipResponse.setSportId(slip.getSportId());
+                        slipResponse.setTeamId(slip.getTeamId());
+                        slipResponse.setMarketId(slip.getMarketId());
+                        slipResponse.setMarketName(slip.getMarketName());
+                        slipResponse.setParticipantName(slip.getParticipantName());
+                        slipResponse.setOdds(slip.getOdds());
+                        slipResponse.setSpecialBetValue(slip.getSpecialBetValue());
+                        slipResponse.setStatus(slip.getStatus());
+                        slipResponse.setCreatedAt(slip.getCreatedAt());
+                        slipResponse.setUpdatedAt(slip.getUpdatedAt());
 
-                        return slipDto;
+                        return slipResponse;
 
                     }).toList();
 
