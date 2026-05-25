@@ -46,7 +46,7 @@ public class SlipResponse {
     private String          specialBetValue;
 
     @Schema(example = "3")
-    private String          status;
+    private Integer          status;
 
     @Schema(example = "2026-05-22T04:40:56")
     private LocalDateTime   createdAt;

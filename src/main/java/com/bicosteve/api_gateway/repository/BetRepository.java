@@ -3,6 +3,7 @@ package com.bicosteve.api_gateway.repository;
 import com.bicosteve.api_gateway.dto.requests.BetRequest;
 import com.bicosteve.api_gateway.dto.requests.SlipRequest;
 import com.bicosteve.api_gateway.exceptions.IllegalArgumentException;
+import com.bicosteve.api_gateway.mappers.rowmappers.BetResultSetExtractor;
 import com.bicosteve.api_gateway.mappers.rowmappers.BetRowMapper;
 import com.bicosteve.api_gateway.mappers.rowmappers.SlipRowMapper;
 import com.bicosteve.api_gateway.models.Bet;
@@ -18,11 +19,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 @Repository
 @RequiredArgsConstructor
@@ -31,6 +28,7 @@ public class BetRepository{
     private final JdbcTemplate jdbcTemplate;
     private final BetRowMapper betRowMapper;
     private final SlipRowMapper slipRowMapper;
+    private final BetResultSetExtractor betsExtractor;
 
 
     @Transactional
@@ -109,6 +107,7 @@ public class BetRepository{
     }
 
     public List<Bet> fetchBets(Long profileId, String filter, int limit, int offset){
+        String filterClause = this.filterQuery(filter);
         String query = """
                 SELECT
                     b.bet_id,
@@ -119,7 +118,9 @@ public class BetRepository{
                     b.total_odds,
                     b.possible_win,
                     b.created_at AS bet_created_at,
+                    b.updated_at AS bet_updated_at,
                     s.bet_slip_id,
+                    s.bet_id AS slip_bet_id,
                     s.event_id,
                     s.sport_id,
                     s.team_id,
@@ -129,7 +130,7 @@ public class BetRepository{
                     s.odds,
                     s.special_bet_value,
                     s.status AS slip_status,
-                    s.created_at slip_created_at,
+                    s.created_at AS slip_created_at,
                     s.updated_at AS slip_updated_at
                 FROM (
                     SELECT
@@ -144,87 +145,28 @@ public class BetRepository{
                         updated_at
                     FROM bets
                     WHERE profile_id = ?
-                """ + this.filterQuery(filter) + """
+                    %s
                     ORDER BY created_at DESC
                     LIMIT ? OFFSET ?
                 ) b
                 LEFT JOIN bet_slips s
                 ON b.bet_id = s.bet_id
-                ORDER BY b.updated_at DESC, s.updated_at DESC
-                """;
+                ORDER BY b.created_at DESC, s.created_at ASC
+                """.formatted(filterClause);
 
-       return  this.jdbcTemplate.query(query,rs -> {
-            Map<Long, Bet> betMap = new LinkedHashMap<>();
+       return  this.jdbcTemplate.query(query,this.betsExtractor, profileId, limit, offset);
+    }
 
-            while(rs.next()){
-                Long betId = rs.getLong("bet_id");
-                Long betProfileId = rs.getLong("profile_id");
-                BigDecimal stake = rs.getBigDecimal("stake");
-                Integer isBonus = rs.getInt("is_bonus");
-                Integer status = rs.getInt("bet_status");
-                BigDecimal totalOdds = rs.getBigDecimal("total_odds");
-                BigDecimal possibleWin = rs.getBigDecimal("possible_win");
-                LocalDateTime createdAt = rs.getObject("bet_created_at", LocalDateTime.class);
-
-                Bet bet = betMap.computeIfAbsent(betId, id -> {
-                    Bet b = new Bet();
-                    b.setBetId(id.intValue());
-                    b.setProfileId(betProfileId);
-                    b.setStake(stake);
-                    b.setIsBonus(isBonus);
-                    b.setStatus(status);
-                    b.setTotalOdds(totalOdds);
-                    b.setPossibleWin(possibleWin);
-                    b.setCreatedAt(createdAt);
-
-                    b.setSlips(new ArrayList<>());
-
-                    return b;
-
-                });
-
-                // Collect Slips related to bet
-                Integer betSlipId = rs.getInt("bet_slip_id");
-                Integer slipBetId = rs.getInt("bet_id");
-                String eventId = rs.getString("event_id");
-                Integer sportId = rs.getInt("sport_id");
-                Integer teamId = rs.getInt("team_id");
-                Integer marketId = rs.getInt("market_id");
-                String marketName = rs.getString("market_name");
-                String participantName = rs.getString("participant_name");
-                BigDecimal odds = rs.getBigDecimal("odds");
-                String specialBetValue = rs.getString("special_bet_value");
-                String slipStatus = rs.getString("slip_status");
-                LocalDateTime slipCreatedAt = rs.getObject("slip_created_at",LocalDateTime.class);
-                LocalDateTime slipUpdatedAt = rs.getObject("slip_updated_at",LocalDateTime.class);
-
-
-                if(eventId != null){
-
-                    Slip slip = new Slip();
-
-                    slip.setBetSlipId(betSlipId);
-                    slip.setEventId(eventId);
-                    slip.setBetId(slipBetId);
-                    slip.setSportId(sportId);
-                    slip.setTeamId(teamId);
-                    slip.setMarketId(marketId);
-                    slip.setMarketName(marketName);
-                    slip.setParticipantName(participantName);
-                    slip.setOdds(odds);
-                    slip.setSpecialBetValue(specialBetValue);
-                    slip.setStatus(slipStatus);
-                    slip.setCreatedAt(slipCreatedAt);
-                    slip.setUpdatedAt(slipUpdatedAt);
-
-                    bet.getSlips().add(slip);
-
-                }
-
-            }
-
-            return new ArrayList<>(betMap.values());
-        }, profileId, limit, offset);
+    private String filterQuery(String filter){
+        if(filter == null)
+            return "";
+        return switch(filter.toLowerCase()) {
+            case "day" -> "AND created_at >= NOW() - INTERVAL 1 DAY";
+            case "week" -> "AND created_at >= NOW() - INTERVAL 7 DAY";
+            case "month" -> "AND created_at >= NOW() - INTERVAL 30 DAY";
+            case "all" -> "";
+            default -> throw new IllegalArgumentException("Invalid filter: " + filter);
+        };
     }
 
     public Bet fetchABet(Long profileId, Long betId){
@@ -284,28 +226,4 @@ public class BetRepository{
         return bet;
     }
 
-    private String filterQuery(String filter){
-        switch(filter.toLowerCase()){
-            case "day" -> {
-                return "AND created_at >= CURRENT_DATE AND created_at < DATE_ADD(CURRENT_DATE, INTERVAL 1 DAY)";
-            }
-
-            case "week" -> {
-                return "AND created_at >= STR_TO_DATE(CONCAT(YEARWEEK(CURRENT_DATE, 1), ' Monday'), '%x%v %W') " +
-                        "AND created_at < DATE_ADD(STR_TO_DATE(CONCAT(YEARWEEK(CURRENT_DATE, 1), ' Monday'), '%x%v %W'), INTERVAL 7 DAY) ";
-            }
-
-            case "month" -> {
-                return "AND created_at >= (LAST_DAY(CURRENT_DATE - INTERVAL 1 MONTH) + INTERVAL 1 DAY) " +
-                        "AND created_at < (LAST_DAY(CURRENT_DATE) + INTERVAL 1 DAY) ";
-            }
-
-            case "all" -> {
-                return ""; // no filter
-            }
-
-            default -> throw new IllegalArgumentException("Invalid filter: " + filter);
-        }
-
-    }
 }

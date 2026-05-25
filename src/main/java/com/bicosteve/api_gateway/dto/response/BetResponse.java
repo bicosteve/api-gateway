@@ -18,7 +18,7 @@ import java.util.List;
 @Schema(description = "Bet response object")
 public class BetResponse {
     @Schema(example="1")
-    private Integer                 betId;
+    private Long                 betId;
 
     @Schema(example="2")
     private Long                    profileId;

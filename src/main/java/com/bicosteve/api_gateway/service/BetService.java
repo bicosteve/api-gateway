@@ -4,6 +4,7 @@ import com.bicosteve.api_gateway.dto.requests.BetRequest;
 import com.bicosteve.api_gateway.dto.requests.SlipRequest;
 import com.bicosteve.api_gateway.dto.response.BetResponse;
 import com.bicosteve.api_gateway.dto.response.PageResponse;
+import com.bicosteve.api_gateway.exceptions.BetNotFoundException;
 import com.bicosteve.api_gateway.exceptions.ExpiredEventException;
 import com.bicosteve.api_gateway.exceptions.IllegalArgumentException;
 import com.bicosteve.api_gateway.mappers.dtomappers.BetDtoMapper;
@@ -84,7 +85,7 @@ public class BetService{
         }
 
         Bet bet = new Bet();
-        bet.setBetId(betId.intValue());
+        bet.setBetId(betId);
         bet.setProfileId(request.getProfileId());
         bet.setStake(BigDecimal.valueOf(request.getStake()));
         bet.setPossibleWin(BigDecimal.valueOf(possibleWin.doubleValue()));
@@ -135,6 +136,10 @@ public class BetService{
 
         // STEP 02::Fetch the bet with its betId
         Bet bet = this.betRepository.fetchABet(profileId,betId);
+        if(bet == null){
+            throw new BetNotFoundException(betId.toString());
+        }
+
         return this.betDtoMapper.toDto(bet);
     }
 

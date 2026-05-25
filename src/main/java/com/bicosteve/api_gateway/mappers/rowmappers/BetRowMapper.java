@@ -16,7 +16,7 @@ public class BetRowMapper implements RowMapper<Bet>{
 
         Bet bet = new Bet();
 
-        bet.setBetId(rs.getInt("bet_id"));
+        bet.setBetId(rs.getLong("bet_id"));
         bet.setProfileId(rs.getLong("profile_id"));
         bet.setStake(rs.getBigDecimal("stake"));
         bet.setIsBonus(rs.getInt("is_bonus"));
