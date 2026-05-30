@@ -110,7 +110,7 @@ public class ProfileService {
                         "Profile with %s number does not exist".formatted(request.getPhoneNumber()))
                 );
 
-        log.info("ProfileService::profile data {}",profile);
+        log.info("ProfileService::profile enums {}",profile);
 
         boolean isValid = this.otpService
                 .verifyOtp(

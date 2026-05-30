@@ -21,19 +21,19 @@ public class ProfileRowMapper implements RowMapper<Profile>{
     public Profile mapRow(ResultSet rs, int rowNum) throws SQLException{
         Profile profile = new Profile();
 
-        // Map profile data
+        // Map profile enums
         profile.setProfileId(rs.getLong("profile_id"));
         profile.setPhoneNumber(rs.getString("phone_number"));
         profile.setPassword(rs.getString("password_hash"));
         profile.setCreatedAt(rs.getObject("created_at", LocalDateTime.class));
         profile.setModifiedAt(rs.getObject("modified_at", LocalDateTime.class));
 
-        // Check if the resultSet has settings data
-        // If yes, maps the setting data in profile else ignore
+        // Check if the resultSet has settings enums
+        // If yes, maps the setting enums in profile else ignore
         // This is to avoid runtime error of settings not being available in the result set.
 
         if(this.hasColumn(rs,"status")){
-            // Map settings data
+            // Map settings enums
             ProfileSettings settings = new ProfileSettings();
             settings.setId(rs.getLong("settings_id"));
             settings.setStatus(rs.getInt("status"));
