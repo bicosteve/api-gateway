@@ -28,7 +28,7 @@ spring:
     init:
       mode: ${SQL_MODE}
       schema-locations: classpath:schema.sql # runs 1st to create tables
-      # data-locations: classpath:data.sql # runs 2nd
+      # enums-locations: classpath:enums.sql # runs 2nd
       # platform: h2
 
 #  jpa:
@@ -62,6 +62,16 @@ mailgun:
   base-url: ${MAILGUN_BASE_URL}
   sandbox: ${MAILGUN_SANDBOX}
   from: ${MAILGUN_FROM}
+
+chapa:
+  secret-key: ${CHAPA_SECRET_KEY}
+  base-url: ${CHAPA_BASE_URL}
+  webhook-secret: ${CHAPA_WEBHOOK_SECRET}
+  currency: ${CHAPA_CURRENCY}
+  callback-url: ${CHAPA_CALLBACK_URL}
+  return-rul: ${CHAPA_RETURN_URL}
+
+
 
 
 
