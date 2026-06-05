@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Transaction {
     private Integer             id;
-    private Integer             profileId;
+    private Long                profileId;
     private String              reference;
     private Integer             type;
     private BigDecimal          amount;

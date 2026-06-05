@@ -15,6 +15,7 @@ import com.bicosteve.api_gateway.exceptions.ProfileNotFoundException;
 import com.bicosteve.api_gateway.mappers.dtomappers.ProfileDtoMapper;
 import com.bicosteve.api_gateway.models.Profile;
 import com.bicosteve.api_gateway.repository.ProfileRepository;
+import com.bicosteve.api_gateway.security.CustomUserDetails;
 import com.bicosteve.api_gateway.security.JwtConfig;
 import com.bicosteve.api_gateway.security.JwtService;
 import com.bicosteve.api_gateway.utils.MailgunService;
@@ -25,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -47,11 +49,13 @@ public class ProfileService {
     * @param id the profile_id to search for
     * @return Optional containing the profile found or empty if not
     * */
-    public ProfileResponse getProfileById(Long id){
-        Profile profile = this.profileRepository.findById(id)
-                        .orElseThrow(() -> new ProfileNotFoundException(id));
+    public ProfileResponse getProfileById(Authentication auth){
+        CustomUserDetails customUserDetails = (CustomUserDetails) auth.getPrincipal();
+        Long profileId = customUserDetails.getProfileId();
+        Profile profile = this.profileRepository.findById(profileId)
+                        .orElseThrow(() -> new ProfileNotFoundException(profileId));
         // 00. Convert model to DTO hiding internal fields
-        log.info("ProfileService::getProfileById {}", profile);
+        log.info("User profile={}", profile);
         return this.profileDtoMapper.toDto(profile);
     }
 

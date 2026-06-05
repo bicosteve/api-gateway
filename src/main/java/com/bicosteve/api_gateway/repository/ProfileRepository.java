@@ -29,18 +29,17 @@ public class ProfileRepository{
     private final LocalDateTime timeNow = LocalDateTime.now();
 
 
-    public Optional<Profile> findById(Long id){
-        String query = "SELECT * FROM profile WHERE profile_id = ?";
+    public Optional<Profile> findById(Long profileId) {
+        String query = "SELECT * FROM profile WHERE profile_id = ? LIMIT 1";
        try{
            Profile profile = this.jdbcTemplate
                    .queryForObject(query,
                    this.profileRowMapper,
-                   id
+                   profileId
            );
-
            return Optional.ofNullable(profile);
        } catch(EmptyResultDataAccessException e) {
-           log.info("No profile found for {}",id);
+           log.info("No profile found for {}",profileId);
            return Optional.empty();
        }
     }

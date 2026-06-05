@@ -101,16 +101,16 @@ CREATE TABLE IF NOT EXISTS wallets(
 
 
 CREATE TABLE IF NOT EXISTS deposits (
-    id              BIGINT PRIMARY KEY AUTO_INCREMENT,
-    profile_id      BIGINT UNSIGNED NOT NULL,
-    tx_ref          VARCHAR(100) NOT NULL UNIQUE,   -- your unique reference
-    amount          DECIMAL(10,2) NOT NULL,
-    currency        VARCHAR(10) DEFAULT 'ETB',
-    checkout_url    TEXT,                           -- Chapa hosted page URL
-    chapa_ref       VARCHAR(100),                   -- Chapa's own reference
-    status          TINYINT DEFAULT 0,              -- 0=pending, 1=success, 2=failed
-    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    id                          BIGINT PRIMARY KEY AUTO_INCREMENT,
+    profile_id                  BIGINT UNSIGNED NOT NULL,
+    transcation_ref             VARCHAR(100) NOT NULL UNIQUE,
+    amount                      DECIMAL(10,2) NOT NULL,
+    currency                    VARCHAR(10) DEFAULT 'ETB',
+    checkout_url                TEXT,                           -- Chapa hosted page URL
+    chapa_ref                   VARCHAR(100),                   -- Chapa's own reference
+    status                      TINYINT DEFAULT 0,              -- 0=pending, 1=success, 2=failed
+    created_at                  DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at                  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (profile_id) REFERENCES profile(profile_id),
     INDEX idx_deposits_profile_id (profile_id),
     INDEX idx_deposits_tx_ref (tx_ref),

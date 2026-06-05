@@ -1,6 +1,5 @@
 package com.bicosteve.api_gateway.controllers;
 
-import com.bicosteve.api_gateway.config.AppConfig;
 import com.bicosteve.api_gateway.dto.requests.LoginRequest;
 import com.bicosteve.api_gateway.dto.requests.RegisterRequest;
 import com.bicosteve.api_gateway.dto.requests.VerifyRequest;
@@ -20,8 +19,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-
 
 @RequiredArgsConstructor
 @RestController
@@ -31,7 +28,6 @@ import java.time.LocalDateTime;
 public class AuthControllers {
     private final ProfileService profileService;
     private final HttpServletResponse response;
-    private final AppConfig appConfig;
 
 
     @PostMapping("/register")
@@ -170,34 +166,5 @@ public class AuthControllers {
 
 
 
-    @GetMapping("/test")
-    @Operation(
-            summary = "Test Api",
-            description = "Used for health check"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Api is up and running",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = TestResponse.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Server error",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ServerErrorResponse.class)
-                    )
-            )
-    })
-    public ResponseEntity<TestResponse> test(){
-        TestResponse message = TestResponse.builder()
-                .message("App running on port %s".formatted(this.appConfig.getPort()))
-                .timestamp(LocalDateTime.now())
-                .build();
-        return ResponseEntity.status(HttpStatus.OK).body(message);
-    }
+
 }

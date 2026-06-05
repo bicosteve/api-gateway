@@ -55,6 +55,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST,"/api/auth/refresh").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/auth/test").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/events/**").permitAll()
+                        .requestMatchers("/api/wallet/webhook/chapa").permitAll()
                         .requestMatchers(
                                 "/h2-console/**",
                                 "/swagger-ui/**",

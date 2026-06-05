@@ -15,4 +15,7 @@ public class ProfileSettingsResponse {
 
     @Schema(example = "0")
     private Integer isVerified;
+
+    @Schema(example = "0")
+    private Integer isDeleted;
 }
