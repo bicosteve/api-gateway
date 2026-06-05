@@ -13,19 +13,17 @@ public class ProfileDtoMapper{
         ProfileResponse dto = new ProfileResponse();
         dto.setProfileId(profile.getProfileId());
         dto.setPhoneNumber(profile.getPhoneNumber());
-        // Ignore password_hash since we do not want to send it to user
+        dto.setCreatedAt(profile.getCreatedAt());
 
         // Map settings to do if setting exists
         if(profile.getProfileSettings() != null){
             ProfileSettingsResponse settingsDto = new ProfileSettingsResponse();
             settingsDto.setStatus(profile.getProfileSettings().getStatus());
             settingsDto.setIsVerified(profile.getProfileSettings().getIsVerified());
-
+            // settingsDto.setIsDeleted(profile.getProfileSettings().getIsDeleted());
             // Ignore setIsDeleted since we do not want to send it to client
-
             dto.setProfileSettings(settingsDto);
         }
-
         return dto;
     }
 }

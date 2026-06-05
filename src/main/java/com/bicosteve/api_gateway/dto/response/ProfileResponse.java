@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
@@ -18,4 +20,7 @@ public class ProfileResponse {
     private String phoneNumber;
 
     private ProfileSettingsResponse profileSettings;
+
+    @Schema(example = "2026-05-08 05:52:30")
+    private LocalDateTime createdAt;
 }

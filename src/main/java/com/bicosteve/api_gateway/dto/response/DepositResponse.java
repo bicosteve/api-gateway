@@ -25,4 +25,7 @@ public class DepositResponse {
 
     @Schema(example = "BIRR")
     private String currency;
+
+    @Schema(example = "profileId")
+    private Long profileId;
 }

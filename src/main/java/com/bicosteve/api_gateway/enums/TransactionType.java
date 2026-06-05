@@ -5,10 +5,9 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum DepositStatus {
-    PENDING(0),
-    SUCCESS(1),
-    FAILED(2);
+public enum TransactionType {
+    CREDIT(1),
+    DEBIT(2);
 
     private final int status;
 }
