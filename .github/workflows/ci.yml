@@ -1,24 +1,39 @@
 name: Api Gateway CI
 
 on:
-    push:
-        branches:
-          - main
-          - dev
-          - "feat/*"
-          - "fix/*"
+  push:
+    branches:
+      - main
+      - dev
+      - "feat/*"
+      - "fix/*"
+  pull_request:
+    branches:
+      - dev
+      - main
 
-    pull_request:
-       branches:
-         - dev
-         - main
+# ── Shared env vars used across all jobs ──
+env:
+  DB_URL: jdbc:mysql://127.0.0.1:3306/sportsbook?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+  DB_USERNAME: root
+  DB_PASSWORD: root
+  DB_DRIVER: com.mysql.cj.jdbc.Driver
+  SQL_MODE: always
+  APP_LOGGING: INFO
+  LOGGING_LEVEL: INFO
+  REDIS_HOST: 127.0.0.1
+  REDIS_PORT: 6379
+  ACCESS_TOKEN_EXPIRATION: 3600000
+  REFRESH_TOKEN_EXPIRATION: 604800000
 
+# ──────────────────────────────────────────────────────
+# JOB 1: TEST
+# ──────────────────────────────────────────────────────
 jobs:
-  build:
-    name: Test, Quality Gate & Build
+  test:
+    name: Run Tests
     runs-on: ubuntu-latest
 
-    # Spin MySQL & Redis services from docker
     services:
       mysql:
         image: mysql:8.0
@@ -28,10 +43,10 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping" 
-          --health-interval=10s 
-          --health-timeout=5s 
-          --health-retries=3
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
       redis:
         image: redis:7.0
@@ -41,59 +56,98 @@ jobs:
           --health-cmd="redis-cli ping"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=3
+          --health-retries=5
 
     steps:
-      # ── STEP 1: Checkout repository ──
+      # ── STEP 1: Checkout ──
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4  # FIXED: v6 does not exist
 
       # ── STEP 2: Set up JDK ──
       - name: Set up JDK 21
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           java-version: "21"
           distribution: "temurin"
 
-      # ── STEP 3: Download & cache maven dependencies ──
-      - name: Download & Cache Maven dependencies
-        uses: actions/cache@v5
+      # ── STEP 3: Cache Maven dependencies ──
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # ── STEP 4: Run unit tests ──
-      # testFailureIgnore=true in pom.xml ensures mvn exits 0 even if tests fail,
-      # so the quality-gate step below can calculate the pass rate.
+      # ── STEP 4: Wait for MySQL to be fully ready ──
+      - name: Wait for MySQL
+        run: |
+          echo "Waiting for MySQL to be ready..."
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -u root -proot --silent 2>/dev/null; then
+              echo "✅ MySQL is ready"
+              break
+            fi
+            echo "Attempt $i: MySQL not ready yet..."
+            sleep 2
+          done
+
+      # ── STEP 5: Run all tests ──
+      # -Dmaven.test.failure.ignore=true → mvn exits 0 even if tests fail
+      # so quality gate step can calculate the pass rate
       - name: Run unit tests
-        id: run-tests
         run: |
           echo "=== Running all tests ==="
-          mvn -B test --file pom.xml 2>&1 | tee test-output.log
-          echo ""
+          mvn -B test \
+            -Dmaven.test.failure.ignore=true \
+            --file pom.xml 2>&1 | tee test-output.log
           echo "=== Test execution complete ==="
         env:
-          DB_URL: jdbc:mysql://127.0.0.1:3306/sportsbook
-          DB_USERNAME: root
-          DB_PASSWORD: root
-          DB_DRIVER: com.mysql.cj.jdbc.Driver
-          SQL_MODE: always
-          LOGGING_LEVEL: DEBUG
-          REDIS_HOST: 127.0.0.1
-          REDIS_PORT: 6379
-          ACCESS_TOKEN_EXPIRATION: 3600
-          REFRESH_TOKEN_EXPIRATION: 604800
           APP_PORT: ${{ secrets.APP_PORT }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           MAILGUN_BASE_URL: ${{ secrets.MAILGUN_BASE_URL }}
           MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
           MAILGUN_SANDBOX: ${{ secrets.MAILGUN_SANDBOX }}
           MAILGUN_FROM: ${{ secrets.MAILGUN_FROM }}
+          # Chapa — FIXED: these were missing, causing Spring context to crash
+          CHAPA_BASE_URL: ${{ secrets.CHAPA_BASE_URL }}
+          CHAPA_SECRET_KEY: ${{ secrets.CHAPA_SECRET_KEY }}
+          CHAPA_WEBHOOK_SECRET: ${{ secrets.CHAPA_WEBHOOK_SECRET }}
+          CHAPA_CURRENCY: ETB
+          CHAPA_CALLBACK_URL: http://localhost:8080/api/wallet/webhook/chapa
+          CHAPA_RETURN_URL: http://localhost:3000/deposit/success
 
-      # ── STEP 5: Quality gate — verify minimum 85% test pass rate ──
-      - name: Quality gate - Verify minimum 85% test pass rate
+      # ── STEP 6: Upload surefire reports for quality gate ──
+      - name: Upload test reports
+        uses: actions/upload-artifact@v4
+        if: always()  # upload even if tests fail
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          retention-days: 7
+
+  # ──────────────────────────────────────────────────────
+  # JOB 2: QUALITY GATE — runs after test job completes
+  # ──────────────────────────────────────────────────────
+  quality-gate:
+    name: Quality Gate — 85% Pass Rate
+    runs-on: ubuntu-latest
+    needs: test  # only runs if test job succeeds
+
+    steps:
+      # ── STEP 1: Checkout ──
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── STEP 2: Download test reports from test job ──
+      - name: Download test reports
+        uses: actions/download-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+
+      # ── STEP 3: Evaluate pass rate ──
+      - name: Evaluate test pass rate
         run: |
           MIN_PASS_RATE=85
           REPORTS_DIR="target/surefire-reports"
@@ -103,21 +157,19 @@ jobs:
             exit 1
           fi
 
-          # List all report files for debugging
           echo "=== Test reports found ==="
-          ls -la "$REPORTS_DIR"/TEST-*.xml 2>/dev/null || echo "No TEST-*.xml files found"
+          ls -la "$REPORTS_DIR"/TEST-*.xml 2>/dev/null || echo "No TEST-*.xml files"
           echo ""
 
-          # Parse all TEST-*.xml files to sum up tests and failures
           TOTAL_TESTS=0
           TOTAL_FAILURES=0
           TOTAL_ERRORS=0
 
           for xml in "$REPORTS_DIR"/TEST-*.xml; do
             [ -f "$xml" ] || continue
-            TESTS=$(sed -n 's/.*tests="\([0-9]*\)".*/\1/p' "$xml" | head -1)
-            FAILURES=$(sed -n 's/.*failures="\([0-9]*\)".*/\1/p' "$xml" | head -1)
-            ERRORS=$(sed -n 's/.*errors="\([0-9]*\)".*/\1/p' "$xml" | head -1)
+            TESTS=$(grep -o 'tests="[0-9]*"' "$xml" | grep -o '[0-9]*' | head -1)
+            FAILURES=$(grep -o 'failures="[0-9]*"' "$xml" | grep -o '[0-9]*' | head -1)
+            ERRORS=$(grep -o 'errors="[0-9]*"' "$xml" | grep -o '[0-9]*' | head -1)
             TOTAL_TESTS=$((TOTAL_TESTS + ${TESTS:-0}))
             TOTAL_FAILURES=$((TOTAL_FAILURES + ${FAILURES:-0}))
             TOTAL_ERRORS=$((TOTAL_ERRORS + ${ERRORS:-0}))
@@ -135,38 +187,118 @@ jobs:
           echo "──────────────────────────────────────"
           echo "  📊  Test Results Summary"
           echo "──────────────────────────────────────"
-          echo "  Total  : $TOTAL_TESTS"
-          echo "  Passed : $PASSED"
-          echo "  Failed : $TOTAL_FAILURES"
-          echo "  Errors : $TOTAL_ERRORS"
-          echo "  Rate   : ${PASS_RATE}%"
-          echo "  Required: ${MIN_PASS_RATE}%"
+          echo "  Total    : $TOTAL_TESTS"
+          echo "  Passed   : $PASSED"
+          echo "  Failed   : $TOTAL_FAILURES"
+          echo "  Errors   : $TOTAL_ERRORS"
+          echo "  Rate     : ${PASS_RATE}%"
+          echo "  Required : ${MIN_PASS_RATE}%"
           echo "──────────────────────────────────────"
 
           if [ "$PASS_RATE" -lt "$MIN_PASS_RATE" ]; then
-            echo "❌ Test pass rate (${PASS_RATE}%) is below the minimum threshold of ${MIN_PASS_RATE}%. Pipeline FAILED."
+            echo "❌ Pass rate ${PASS_RATE}% is below ${MIN_PASS_RATE}% threshold. Pipeline FAILED."
             exit 1
           fi
 
-          echo "✅ Test pass rate (${PASS_RATE}%) meets the ${MIN_PASS_RATE}% threshold."
+          echo "✅ Pass rate ${PASS_RATE}% meets the ${MIN_PASS_RATE}% threshold."
 
-      # ── STEP 6: Build the app (only runs if quality gate passed) ──
-      - name: Build with Maven
-        run: mvn -B package -DskipTests --file pom.xml
+  # ──────────────────────────────────────────────────────
+  # JOB 3: BUILD — runs only after quality gate passes
+  # ──────────────────────────────────────────────────────
+  build:
+    name: Build Artifact
+    runs-on: ubuntu-latest
+    needs: quality-gate  # only runs if quality gate passes
+
+    services:
+      mysql:
+        image: mysql:8.0
         env:
-          DB_URL: jdbc:mysql://127.0.0.1:3306/sportsbook
-          DB_USERNAME: root
-          DB_PASSWORD: root
-          DB_DRIVER: com.mysql.cj.jdbc.Driver
-          SQL_MODE: always
-          LOGGING_LEVEL: DEBUG
-          REDIS_HOST: 127.0.0.1
-          REDIS_PORT: 6379
-          ACCESS_TOKEN_EXPIRATION: 3600
-          REFRESH_TOKEN_EXPIRATION: 604800
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: sportsbook
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      redis:
+        image: redis:7.0
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      # ── STEP 1: Checkout ──
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── STEP 2: Set up JDK ──
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      # ── STEP 3: Cache Maven dependencies ──
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      # ── STEP 4: Build JAR ──
+      - name: Build with Maven
+        run: |
+          echo "=== Building application ==="
+          mvn -B package -DskipTests --file pom.xml
+          echo "=== Build complete ==="
+        env:
           APP_PORT: ${{ secrets.APP_PORT }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           MAILGUN_BASE_URL: ${{ secrets.MAILGUN_BASE_URL }}
           MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
           MAILGUN_SANDBOX: ${{ secrets.MAILGUN_SANDBOX }}
           MAILGUN_FROM: ${{ secrets.MAILGUN_FROM }}
+          CHAPA_BASE_URL: ${{ secrets.CHAPA_BASE_URL }}
+          CHAPA_SECRET_KEY: ${{ secrets.CHAPA_SECRET_KEY }}
+          CHAPA_WEBHOOK_SECRET: ${{ secrets.CHAPA_WEBHOOK_SECRET }}
+          CHAPA_CURRENCY: ETB
+          CHAPA_CALLBACK_URL: http://localhost:8080/api/wallet/webhook/chapa
+          CHAPA_RETURN_URL: http://localhost:3000/deposit/success
+
+      # ── STEP 5: Upload JAR artifact ──
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-gateway-jar
+          path: target/*.jar
+          retention-days: 7
+
+  # ──────────────────────────────────────────────────────
+  # PIPELINE SUMMARY
+  # ──────────────────────────────────────────────────────
+  summary:
+    name: Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: [test, quality-gate, build]
+    if: always()  # always runs to show final status
+
+    steps:
+      - name: Print pipeline result
+        run: |
+          echo "──────────────────────────────────────"
+          echo "  🏁  Pipeline Summary"
+          echo "──────────────────────────────────────"
+          echo "  Test job        : ${{ needs.test.result }}"
+          echo "  Quality gate    : ${{ needs.quality-gate.result }}"
+          echo "  Build job       : ${{ needs.build.result }}"
+          echo "──────────────────────────────────────"
