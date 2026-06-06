@@ -65,7 +65,7 @@ jobs:
              restore-keys: |
                ${{ runner.os }}-maven-
 
-        # STEP 5: Run unit tests
+        # STEP 5: Run unit tests (testFailureIgnore=true in pom.xml won't fail on test errors)
          - name: Run unit tests
            run: mvn -B test --file pom.xml
            env:
@@ -88,6 +88,60 @@ jobs:
              MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
              MAILGUN_SANDBOX: ${{ secrets.MAILGUN_SANDBOX }}
              MAILGUN_FROM: ${{ secrets.MAILGUN_FROM }}
+
+        # STEP 5.5: Verify minimum 85% test pass rate
+         - name: Verify test pass rate (minimum 85%)
+           run: |
+             MIN_PASS_RATE=85
+             REPORTS_DIR="target/surefire-reports"
+
+             if [ ! -d "$REPORTS_DIR" ]; then
+               echo "No test reports found at $REPORTS_DIR"
+               exit 1
+             fi
+
+             # Parse all TEST-*.xml files to sum up tests and failures
+             TOTAL_TESTS=0
+             TOTAL_FAILURES=0
+             TOTAL_ERRORS=0
+
+             for xml in "$REPORTS_DIR"/TEST-*.xml; do
+               [ -f "$xml" ] || continue
+               # Use sed (portable) to extract attributes from <testsuite> element
+               TESTS=$(sed -n 's/.*tests="\([0-9]*\)".*/\1/p' "$xml" | head -1)
+               FAILURES=$(sed -n 's/.*failures="\([0-9]*\)".*/\1/p' "$xml" | head -1)
+               ERRORS=$(sed -n 's/.*errors="\([0-9]*\)".*/\1/p' "$xml" | head -1)
+               TOTAL_TESTS=$((TOTAL_TESTS + ${TESTS:-0}))
+               TOTAL_FAILURES=$((TOTAL_FAILURES + ${FAILURES:-0}))
+               TOTAL_ERRORS=$((TOTAL_ERRORS + ${ERRORS:-0}))
+             done
+
+             PASSED=$((TOTAL_TESTS - TOTAL_FAILURES - TOTAL_ERRORS))
+
+             if [ "$TOTAL_TESTS" -eq 0 ]; then
+               echo "No tests found. Pipeline cannot proceed."
+               exit 1
+             fi
+
+             PASS_RATE=$((PASSED * 100 / TOTAL_TESTS))
+
+             echo "──────────────────────────────────────"
+             echo "  Test Results Summary"
+             echo "──────────────────────────────────────"
+             echo "  Total  : $TOTAL_TESTS"
+             echo "  Passed : $PASSED"
+             echo "  Failed : $TOTAL_FAILURES"
+             echo "  Errors : $TOTAL_ERRORS"
+             echo "  Rate   : ${PASS_RATE}%"
+             echo "  Required: ${MIN_PASS_RATE}%"
+             echo "──────────────────────────────────────"
+
+             if [ "$PASS_RATE" -lt "$MIN_PASS_RATE" ]; then
+               echo "Test pass rate (${PASS_RATE}%) is below the minimum threshold of ${MIN_PASS_RATE}%. Pipeline FAILED."
+               exit 1
+             fi
+
+             echo "Test pass rate (${PASS_RATE}) meets the ${MIN_PASS_RATE}% threshold. Pipeline may continue."
 
         # STEP 6: Build the app to confirm everything is OK.
          - name: Build with Maven
