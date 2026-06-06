@@ -14,13 +14,11 @@ on:
          - main
 
 jobs:
-  # ══════════════════════════════════════════════════════════════
-  #  STAGE 1: TEST
-  # ══════════════════════════════════════════════════════════════
-  test:
-    name: Run Unit Tests
+  build:
+    name: Test, Quality Gate & Build
     runs-on: ubuntu-latest
 
+    # Spin MySQL & Redis services from docker
     services:
       mysql:
         image: mysql:8.0
@@ -46,15 +44,18 @@ jobs:
           --health-retries=3
 
     steps:
+      # ── STEP 1: Checkout repository ──
       - name: Checkout code
         uses: actions/checkout@v6
 
+      # ── STEP 2: Set up JDK ──
       - name: Set up JDK 21
         uses: actions/setup-java@v5
         with:
           java-version: "21"
           distribution: "temurin"
 
+      # ── STEP 3: Download & cache maven dependencies ──
       - name: Download & Cache Maven dependencies
         uses: actions/cache@v5
         with:
@@ -63,18 +64,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Debug - List test classes
-        run: |
-          echo "=== Test classes found ==="
-          find src/test -name "*Test.java" -o -name "*Tests.java" | sort
-          echo ""
-          echo "=== Compiling tests ==="
-          mvn -B test-compile --file pom.xml
-          echo ""
-          echo "=== Compiled test classes ==="
-          find target/test-classes -name "*Test.class" -o -name "*Tests.class" 2>/dev/null | sort || echo "No compiled test classes found"
-
+      # ── STEP 4: Run unit tests ──
+      # testFailureIgnore=true in pom.xml ensures mvn exits 0 even if tests fail,
+      # so the quality-gate step below can calculate the pass rate.
       - name: Run unit tests
+        id: run-tests
         run: |
           echo "=== Running all tests ==="
           mvn -B test --file pom.xml 2>&1 | tee test-output.log
@@ -98,55 +92,21 @@ jobs:
           MAILGUN_SANDBOX: ${{ secrets.MAILGUN_SANDBOX }}
           MAILGUN_FROM: ${{ secrets.MAILGUN_FROM }}
 
-      - name: Debug - Show test reports
-        if: always()
-        run: |
-          echo "=== Surefire reports ==="
-          ls -la target/surefire-reports/ 2>/dev/null || echo "No surefire-reports directory"
-          echo ""
-          echo "=== Test report contents ==="
-          for xml in target/surefire-reports/TEST-*.xml; do
-            if [ -f "$xml" ]; then
-              echo "--- $xml ---"
-              head -5 "$xml"
-              echo ""
-            fi
-          done
-
-      - name: Upload test reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-reports
-          path: |
-            target/surefire-reports/
-            test-output.log
-
-  # ══════════════════════════════════════════════════════════════
-  #  STAGE 2: QUALITY GATE
-  # ══════════════════════════════════════════════════════════════
-  quality-gate:
-    name: Quality Gate (85% Pass Rate)
-    runs-on: ubuntu-latest
-    needs: test
-    if: always()
-
-    steps:
-      - name: Download test reports
-        uses: actions/download-artifact@v4
-        with:
-          name: test-reports
-          path: test-reports
-
-      - name: Verify test pass rate (minimum 85%)
+      # ── STEP 5: Quality gate — verify minimum 85% test pass rate ──
+      - name: Quality gate - Verify minimum 85% test pass rate
         run: |
           MIN_PASS_RATE=85
-          REPORTS_DIR="test-reports"
+          REPORTS_DIR="target/surefire-reports"
 
           if [ ! -d "$REPORTS_DIR" ]; then
             echo "❌ No test reports found at $REPORTS_DIR"
             exit 1
           fi
+
+          # List all report files for debugging
+          echo "=== Test reports found ==="
+          ls -la "$REPORTS_DIR"/TEST-*.xml 2>/dev/null || echo "No TEST-*.xml files found"
+          echo ""
 
           # Parse all TEST-*.xml files to sum up tests and failures
           TOTAL_TESTS=0
@@ -155,7 +115,6 @@ jobs:
 
           for xml in "$REPORTS_DIR"/TEST-*.xml; do
             [ -f "$xml" ] || continue
-            # Use sed (portable) to extract attributes from <testsuite> element
             TESTS=$(sed -n 's/.*tests="\([0-9]*\)".*/\1/p' "$xml" | head -1)
             FAILURES=$(sed -n 's/.*failures="\([0-9]*\)".*/\1/p' "$xml" | head -1)
             ERRORS=$(sed -n 's/.*errors="\([0-9]*\)".*/\1/p' "$xml" | head -1)
@@ -189,58 +148,9 @@ jobs:
             exit 1
           fi
 
-          echo "✅ Test pass rate (${PASS_RATE}%) meets the ${MIN_PASS_RATE}% threshold. Pipeline may continue."
+          echo "✅ Test pass rate (${PASS_RATE}%) meets the ${MIN_PASS_RATE}% threshold."
 
-  # ══════════════════════════════════════════════════════════════
-  #  STAGE 3: BUILD
-  # ══════════════════════════════════════════════════════════════
-  build:
-    name: Build Application
-    runs-on: ubuntu-latest
-    needs: quality-gate
-
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: sportsbook
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping" 
-          --health-interval=10s 
-          --health-timeout=5s 
-          --health-retries=3
-
-      redis:
-        image: redis:7.0
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd="redis-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v5
-        with:
-          java-version: "21"
-          distribution: "temurin"
-
-      - name: Download & Cache Maven dependencies
-        uses: actions/cache@v5
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
-
+      # ── STEP 6: Build the app (only runs if quality gate passed) ──
       - name: Build with Maven
         run: mvn -B package -DskipTests --file pom.xml
         env:
@@ -260,11 +170,3 @@ jobs:
           MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
           MAILGUN_SANDBOX: ${{ secrets.MAILGUN_SANDBOX }}
           MAILGUN_FROM: ${{ secrets.MAILGUN_FROM }}
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: api-gateway-jar
-          path: target/*.jar
-
-
