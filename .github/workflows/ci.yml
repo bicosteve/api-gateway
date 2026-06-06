@@ -180,20 +180,22 @@ jobs:
           name: surefire-reports
           path: target/surefire-reports/
 
+      - name: Debug test report breakdown
+        run: |
+          echo "=== RAW REPORT SUMMARY ==="
+          for f in target/surefire-reports/TEST-*.xml; do
+            echo ""
+            echo "FILE: $f"
+            grep "<testsuite" "$f"
+          done
+
       # ── STEP 3: Evaluate pass rate ──
       - name: Evaluate test pass rate
         run: |
           MIN_PASS_RATE=85
           REPORTS_DIR="target/surefire-reports"
 
-          if [ ! -d "$REPORTS_DIR" ]; then
-            echo "❌ No test reports found at $REPORTS_DIR"
-            exit 1
-          fi
-
-          echo "=== Test reports found ==="
-          ls -la "$REPORTS_DIR"/TEST-*.xml 2>/dev/null || echo "No TEST-*.xml files"
-          echo ""
+          echo "=== Scanning test reports ==="
 
           TOTAL_TESTS=0
           TOTAL_FAILURES=0
@@ -201,40 +203,40 @@ jobs:
 
           for xml in "$REPORTS_DIR"/TEST-*.xml; do
             [ -f "$xml" ] || continue
-            TESTS=$(grep -o 'tests="[0-9]*"' "$xml" | grep -o '[0-9]*' | head -1)
-            FAILURES=$(grep -o 'failures="[0-9]*"' "$xml" | grep -o '[0-9]*' | head -1)
-            ERRORS=$(grep -o 'errors="[0-9]*"' "$xml" | grep -o '[0-9]*' | head -1)
-            TOTAL_TESTS=$((TOTAL_TESTS + ${TESTS:-0}))
-            TOTAL_FAILURES=$((TOTAL_FAILURES + ${FAILURES:-0}))
-            TOTAL_ERRORS=$((TOTAL_ERRORS + ${ERRORS:-0}))
+
+            # Only count REAL executed suites (tests > 0)
+            TESTS=$(awk -F'tests="' '/tests="/ {split($2,a,"\""); if (a[1] > 0) print a[1]}' "$xml" | awk '{sum+=$1} END {print sum+0}')
+            FAILURES=$(awk -F'failures="' '/failures="/ {split($2,a,"\""); if (a[1] ~ /^[0-9]+$/) sum+=a[1]} END {print sum+0}' "$xml")
+            ERRORS=$(awk -F'errors="' '/errors="/ {split($2,a,"\""); if (a[1] ~ /^[0-9]+$/) sum+=a[1]} END {print sum+0}' "$xml")
+
+            TOTAL_TESTS=$((TOTAL_TESTS + TESTS))
+            TOTAL_FAILURES=$((TOTAL_FAILURES + FAILURES))
+            TOTAL_ERRORS=$((TOTAL_ERRORS + ERRORS))
           done
 
           PASSED=$((TOTAL_TESTS - TOTAL_FAILURES - TOTAL_ERRORS))
 
           if [ "$TOTAL_TESTS" -eq 0 ]; then
-            echo "❌ No tests found. Pipeline cannot proceed."
+            echo "❌ No valid tests detected"
             exit 1
           fi
 
           PASS_RATE=$((PASSED * 100 / TOTAL_TESTS))
 
-          echo "──────────────────────────────────────"
-          echo "  📊  Test Results Summary"
-          echo "──────────────────────────────────────"
-          echo "  Total    : $TOTAL_TESTS"
-          echo "  Passed   : $PASSED"
-          echo "  Failed   : $TOTAL_FAILURES"
-          echo "  Errors   : $TOTAL_ERRORS"
-          echo "  Rate     : ${PASS_RATE}%"
-          echo "  Required : ${MIN_PASS_RATE}%"
-          echo "──────────────────────────────────────"
+          echo "────────────────────────────"
+          echo "Total Tests : $TOTAL_TESTS"
+          echo "Passed      : $PASSED"
+          echo "Failures    : $TOTAL_FAILURES"
+          echo "Errors      : $TOTAL_ERRORS"
+          echo "Pass Rate   : ${PASS_RATE}%"
+          echo "────────────────────────────"
 
           if [ "$PASS_RATE" -lt "$MIN_PASS_RATE" ]; then
-            echo "❌ Pass rate ${PASS_RATE}% is below ${MIN_PASS_RATE}% threshold. Pipeline FAILED."
+            echo "❌ Below threshold"
             exit 1
           fi
 
-          echo "✅ Pass rate ${PASS_RATE}% meets the ${MIN_PASS_RATE}% threshold."
+          echo "✅ Passed quality gate"
 
   # ──────────────────────────────────────────────────────
   # JOB 3: BUILD — runs only after quality gate passes
