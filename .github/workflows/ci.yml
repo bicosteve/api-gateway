@@ -65,9 +65,33 @@ jobs:
              restore-keys: |
                ${{ runner.os }}-maven-
 
+        # STEP 5: Run unit tests
+         - name: Run unit tests
+           run: mvn -B test --file pom.xml
+           env:
+             DB_URL: jdbc:mysql://127.0.0.1:3306/sportsbook
+             DB_USERNAME: root
+             DB_PASSWORD: root
+             DB_DRIVER: com.mysql.cj.jdbc.Driver
+             SQL_MODE: always
+             LOGGING_LEVEL: DEBUG
+
+             REDIS_HOST: 127.0.0.1
+             REDIS_PORT: 6379
+
+             ACCESS_TOKEN_EXPIRATION: 3600
+             REFRESH_TOKEN_EXPIRATION: 604800
+
+             APP_PORT: ${{ secrets.APP_PORT }}
+             JWT_SECRET: ${{ secrets.JWT_SECRET }}
+             MAILGUN_BASE_URL: ${{ secrets.MAILGUN_BASE_URL }}
+             MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
+             MAILGUN_SANDBOX: ${{ secrets.MAILGUN_SANDBOX }}
+             MAILGUN_FROM: ${{ secrets.MAILGUN_FROM }}
+
         # STEP 6: Build the app to confirm everything is OK.
          - name: Build with Maven
-           run: mvn -B package --file pom.xml
+           run: mvn -B package -DskipTests --file pom.xml
            env:
              DB_URL: jdbc:mysql://127.0.0.1:3306/sportsbook
              DB_USERNAME: root
