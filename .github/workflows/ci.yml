@@ -127,6 +127,14 @@ jobs:
           CHAPA_CALLBACK_URL: http://localhost:8080/api/wallet/webhook/chapa
           CHAPA_RETURN_URL: http://localhost:3000/deposit/success
 
+      - name: List XML Reports
+        run: |
+          find target/surefire-reports -name "*.xml"
+
+      - name: Dump test counts
+        run: |
+          grep -R "tests=" target/surefire-reports/*.xml
+
       - name: Show Surefire Reports
         if: always()
         run: |
@@ -149,6 +157,9 @@ jobs:
           name: surefire-reports
           path: target/surefire-reports/
           retention-days: 7
+
+
+
   # ──────────────────────────────────────────────────────
   # JOB 2: QUALITY GATE — runs after test job completes
   # ──────────────────────────────────────────────────────
