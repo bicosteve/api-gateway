@@ -59,18 +59,15 @@ jobs:
           --health-retries=5
 
     steps:
-      # ── STEP 1: Checkout ──
       - name: Checkout code
-        uses: actions/checkout@v4  # FIXED: v6 does not exist
+        uses: actions/checkout@v4
 
-      # ── STEP 2: Set up JDK ──
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: "21"
           distribution: "temurin"
 
-      # ── STEP 3: Cache Maven dependencies ──
       - name: Cache Maven dependencies
         uses: actions/cache@v4
         with:
@@ -79,29 +76,42 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # ── STEP 4: Wait for MySQL to be fully ready ──
       - name: Wait for MySQL
         run: |
-          echo "Waiting for MySQL to be ready..."
+          echo "Waiting for MySQL..."
           for i in {1..30}; do
-            if mysqladmin ping -h 127.0.0.1 -u root -proot --silent 2>/dev/null; then
+            if mysqladmin ping -h 127.0.0.1 -u root -proot --silent; then
               echo "✅ MySQL is ready"
               break
             fi
-            echo "Attempt $i: MySQL not ready yet..."
+            echo "Attempt $i..."
             sleep 2
           done
 
-      # ── STEP 5: Run all tests ──
-      # -Dmaven.test.failure.ignore=true → mvn exits 0 even if tests fail
-      # so quality gate step can calculate the pass rate
-      - name: Run unit tests
+      - name: Debug Environment
         run: |
-          echo "=== Running all tests ==="
-          mvn -B test \
+          echo "=== JAVA VERSION ==="
+          java -version
+
+          echo ""
+          echo "=== MAVEN VERSION ==="
+          mvn -version
+
+          echo ""
+          echo "=== TEST FILES FOUND ==="
+          find src/test/java -type f | sort
+
+      - name: Run Tests
+        run: |
+          echo "=== Running Tests ==="
+
+          mvn clean test \
             -Dmaven.test.failure.ignore=true \
-            --file pom.xml 2>&1 | tee test-output.log
-          echo "=== Test execution complete ==="
+            -B \
+            --file pom.xml \
+            2>&1 | tee test-output.log
+
+          echo "=== Test Execution Complete ==="
         env:
           APP_PORT: ${{ secrets.APP_PORT }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
@@ -109,7 +119,7 @@ jobs:
           MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
           MAILGUN_SANDBOX: ${{ secrets.MAILGUN_SANDBOX }}
           MAILGUN_FROM: ${{ secrets.MAILGUN_FROM }}
-          # Chapa — FIXED: these were missing, causing Spring context to crash
+
           CHAPA_BASE_URL: ${{ secrets.CHAPA_BASE_URL }}
           CHAPA_SECRET_KEY: ${{ secrets.CHAPA_SECRET_KEY }}
           CHAPA_WEBHOOK_SECRET: ${{ secrets.CHAPA_WEBHOOK_SECRET }}
@@ -117,15 +127,28 @@ jobs:
           CHAPA_CALLBACK_URL: http://localhost:8080/api/wallet/webhook/chapa
           CHAPA_RETURN_URL: http://localhost:3000/deposit/success
 
-      # ── STEP 6: Upload surefire reports for quality gate ──
-      - name: Upload test reports
+      - name: Show Surefire Reports
+        if: always()
+        run: |
+          echo "=== SUREFIRE REPORT FILES ==="
+          find target/surefire-reports -type f || true
+
+          echo ""
+          echo "=== XML TEST SUMMARY ==="
+
+          for f in target/surefire-reports/TEST-*.xml; do
+            echo ""
+            echo "FILE: $f"
+            grep "<testsuite " "$f" || true
+          done
+
+      - name: Upload Surefire Reports
         uses: actions/upload-artifact@v4
-        if: always()  # upload even if tests fail
+        if: always()
         with:
           name: surefire-reports
           path: target/surefire-reports/
           retention-days: 7
-
   # ──────────────────────────────────────────────────────
   # JOB 2: QUALITY GATE — runs after test job completes
   # ──────────────────────────────────────────────────────

@@ -150,8 +150,8 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.5.3</version>
 				<configuration>
-					<!-- Don't fail the build on test failures; we check pass rate in CI -->
 					<testFailureIgnore>true</testFailureIgnore>
 				</configuration>
 			</plugin>
