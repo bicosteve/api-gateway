@@ -6,9 +6,13 @@ import com.bicosteve.api_gateway.models.Profile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -86,8 +90,22 @@ class ProfileRepositoryTest {
     @Test
     void insertProfileExecutesUpdate() {
         RegisterRequest req = new RegisterRequest("254701234567", "a@b.com", "hashed", "hashed");
+
+        // Simulate the JDBC driver populating the KeyHolder with the generated id
+        when(jdbcTemplate.update(any(PreparedStatementCreator.class), any(KeyHolder.class)))
+                .thenAnswer(invocation -> {
+                    KeyHolder keyHolder = invocation.getArgument(1);
+                    Map<String, Object> keys = new HashMap<>();
+                    keys.put("profile_id", 1L);
+                    keyHolder.getKeyList().add(keys);
+                    return 1;
+                });
+
         repository.insertProfile(req);
-        // Two update statements are issued: one for profile and one for profile_settings
-        verify(jdbcTemplate, atLeastOnce()).update(anyString(), (Object[]) any());
+
+        // The profile insert (via PreparedStatementCreator) and the
+        // profile_settings insert (via varargs) are both executed
+        verify(jdbcTemplate).update(any(PreparedStatementCreator.class), any(KeyHolder.class));
+        verify(jdbcTemplate).update(anyString(), any(), any(), any(), any(), any(), any());
     }
 }

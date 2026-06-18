@@ -174,7 +174,7 @@ class BetServiceTest {
                     .totalOdds(BigDecimal.valueOf(2.5))
                     .possibleWin(BigDecimal.valueOf(25)).build());
         }
-        when(betRepository.fetchBets(7L, "all", 11, 0)).thenReturn(bets);
+        when(betRepository.fetchBets(7L, "all", 4, 0)).thenReturn(bets);
 
         PageResponse<BetResponse> page = service.getBets("all", 0, 3, auth(new ProfileIdHolder(7L)));
 

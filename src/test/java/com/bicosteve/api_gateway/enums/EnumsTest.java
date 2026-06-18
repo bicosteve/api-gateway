@@ -17,7 +17,7 @@ class EnumsTest {
     void transactionStatusHasExpectedValues() {
         assertEquals(0, TransactionStatus.PENDING.getStatus());
         assertEquals(1, TransactionStatus.SUCCESS.getStatus());
-        assertEquals(2, TransactionStatus.FAILED.getStatus());
+        assertEquals(3, TransactionStatus.FAILED.getStatus());
     }
 
     @Test

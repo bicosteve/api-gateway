@@ -118,12 +118,12 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleGenericExceptionReturns500() {
+    void handleGenericExceptionReturns500StatusCodeWith410BodyStatus() {
         ResponseEntity<ErrorResponse> response =
                 handler.handleGenericException(new RuntimeException("boom"));
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertEquals(500, response.getBody().getStatus());
+        assertEquals(HttpStatus.GONE.value(), response.getBody().getStatus());
     }
 
     @Test

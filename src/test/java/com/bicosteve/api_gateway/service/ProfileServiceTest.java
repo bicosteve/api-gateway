@@ -99,7 +99,7 @@ class ProfileServiceTest {
     void getProfileByIdThrowsWhenNotFound() {
         when(profileRepository.findById(99L)).thenReturn(Optional.empty());
 
-        Profile p = Profile.builder().profileId(99L).phoneNumber("x").build();
+        Profile p = Profile.builder().profileId(99L).phoneNumber("x").password("encoded").build();
         Authentication auth = new UsernamePasswordAuthenticationToken(
                 userDetails(p), null, List.of());
 

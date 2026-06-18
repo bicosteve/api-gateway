@@ -54,7 +54,7 @@ class EventServiceTest {
     @Test
     void getEventsDetectsHasNext() {
         List<Event> events = new ArrayList<>();
-        for (int i = 0; i < 4; i++) events.add(event("e" + i));
+        for (int i = 0; i < 11; i++) events.add(event("e" + i));
         when(eventRepository.fetchEvents(11, 0)).thenReturn(events);
 
         PageResponse<EventResponse> page = service.getEvents(10, 0);

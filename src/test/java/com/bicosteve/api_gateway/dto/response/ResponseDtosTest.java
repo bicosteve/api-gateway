@@ -170,6 +170,7 @@ class ResponseDtosTest {
                 .isBonus(0)
                 .status(1)
                 .totalOdds(new BigDecimal("2.0"))
+                .slips(List.of())
                 .build();
         assertEquals(1L, b.getBetId());
         assertEquals(2L, b.getProfileId());

@@ -37,7 +37,7 @@ class OtpServiceTest {
         verify(valueOps).set(
                 eq("otp:254701234567"),
                 eq(otp),
-                eq(5),
+                eq(5L),
                 eq(TimeUnit.HOURS)
         );
     }
