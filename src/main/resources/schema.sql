@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS deposits (
     updated_at                  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (profile_id) REFERENCES profile(profile_id),
     INDEX idx_deposits_profile_id (profile_id),
-    INDEX idx_deposits_tx_ref (tx_ref),
+    INDEX idx_deposits_tx_ref (chapa_ref),
     INDEX idx_deposits_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
