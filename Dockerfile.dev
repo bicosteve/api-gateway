@@ -1,0 +1,22 @@
+FROM maven:3.9.9-eclipse-temurin-21 AS dependencies
+
+WORKDIR /app
+
+# Pre-fetch dependencies for faster local rebuilds.
+COPY pom.xml ./
+RUN mvn -B -DskipTests dependency:go-offline
+
+FROM maven:3.9.9-eclipse-temurin-21 AS development
+
+WORKDIR /app
+
+RUN useradd --create-home --shell /bin/bash usr
+
+COPY --from=dependencies --chown=usr:usr /root/.m2 /home/usr/.m2
+COPY --chown=usr:usr . .
+
+USER usr
+
+EXPOSE 5001
+
+CMD ["mvn", "spring-boot:run", "-Dspring-boot.run.profiles=dev"]
