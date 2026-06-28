@@ -105,7 +105,7 @@ jobs:
           for i in {1..30}; do
             if mysqladmin ping -h 127.0.0.1 -u root -proot --silent; then
               echo "MySQL is ready"
-              break
+              exit 0
             fi
             echo "Attempt $i..."
             sleep 2
