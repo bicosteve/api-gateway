@@ -23,23 +23,6 @@ on:
         type: string
 
 env:
-  # CI/test Database
-  DB_URL: jdbc:mysql://127.0.0.1:3306/sportsbook?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-  DB_USERNAME: root
-  DB_PASSWORD: root
-  DB_DRIVER: com.mysql.cj.jdbc.Driver
-  SQL_MODE: always
-
-  # CI/test Redis
-  REDIS_HOST: 127.0.0.1
-  REDIS_PORT: 6379
-
-  # App/test config
-  APP_LOGGING: INFO
-  LOGGING_LEVEL: INFO
-  ACCESS_TOKEN_EXPIRATION: 3600000
-  REFRESH_TOKEN_EXPIRATION: 604800000
-
   # Build Configs
   DOCKER_IMAGE_NAME: api-gateway
   JAVA_VERSION: "21"
@@ -51,6 +34,24 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
     if: github.event_name != 'workflow_dispatch'
+
+    env:
+      # CI/test Database
+      DB_URL: jdbc:mysql://127.0.0.1:3306/sportsbook?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      DB_DRIVER: com.mysql.cj.jdbc.Driver
+      SQL_MODE: always
+
+      # CI/test Redis
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+
+      # App/test config
+      APP_LOGGING: INFO
+      LOGGING_LEVEL: INFO
+      ACCESS_TOKEN_EXPIRATION: 3600000
+      REFRESH_TOKEN_EXPIRATION: 604800000
 
     services:
       mysql:
@@ -351,9 +352,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Resolve image tag
-        id: image_tag
+        id: tag
+        shell: bash
         run: |
-          # Use the user-supplied SHA, falling back to "latest"
           TAG="${{ github.event.inputs.image_tag }}"
           if [ -z "$TAG" ]; then
             TAG="latest"
