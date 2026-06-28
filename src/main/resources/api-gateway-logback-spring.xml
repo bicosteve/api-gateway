@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- PROPERTIES -->
+    <property name="APP_NAME" value="api-gateway"/>
+
+    <!-- Allows LOGGING_LEVEL env/property to control app logs in prod -->
+    <springProperty
+            scope="context"
+            name="APP_LOG_LEVEL"
+            source="LOGGING_LEVEL"
+            defaultValue="INFO"
+    />
+
+
+    <!-- LOG PATTERNS -->
+    <property
+            name="CONSOLE_PATTERN"
+            value="%d{yyyy-MM-dd HH:mm:ss} | %-5level | %logger{36} | %M line %L | %msg%n"
+    />
+
+    <!-- APPENDERS -->
+
+    <!-- Plain text console for local development -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- JSON console for production Docker stdout / Alloy / Loki -->
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"app":"api-gateway","environment":"prod"}</customFields>
+        </encoder>
+    </appender>
+
+    <!-- REDUCE FRAMEWORK NOISE -->
+
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.springframework.jdbc" level="INFO"/>
+    <logger name="com.zaxxer.hikari" level="WARN"/>
+    <logger name="org.springframework.amqp" level="WARN"/>
+
+    <!-- DEV PROFILE -->
+    <springProfile name="dev">
+
+        <logger name="com.bicosteve.api_gateway" level="DEBUG" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+
+        <root level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+
+    </springProfile>
+
+
+    <!-- PROD PROFILE -->
+
+    <springProfile name="prod">
+
+        <logger name="com.bicosteve.api_gateway" level="${APP_LOG_LEVEL}" additivity="false">
+            <appender-ref ref="JSON_CONSOLE"/>
+        </logger>
+
+        <root level="INFO">
+            <appender-ref ref="JSON_CONSOLE"/>
+        </root>
+
+    </springProfile>
+
+</configuration>

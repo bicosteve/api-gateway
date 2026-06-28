@@ -1,0 +1,106 @@
+spring:
+  application:
+    name: api-gateway
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
+    hikari:
+      pool-name: api-gateway-pool
+      keepalive-time: 30000
+      minimum-idle: 10
+      maximum-pool-size: 30
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      validation-timeout: 5000
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      timeout: 5000ms
+      ssl:
+        enabled: ${REDIS_SSL:true}    # TLS is required by Upstash (rediss:// protocol)
+
+  sql:
+    init:
+      # In prod the schema is managed/migrated out-of-band; do not auto-run.
+      mode: ${SQL_MODE:never}
+      schema-locations: classpath:schema.sql
+
+  jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: ${ACCESS_TOKEN_EXPIRATION}
+  refresh-token-expiration: ${REFRESH_TOKEN_EXPIRATION}
+
+server:
+  port: ${APP_PORT:5001}
+  shutdown: graceful
+  forward-headers-strategy: framework   # honor X-Forwarded-* behind ALB/Nginx
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/plain
+    min-response-size: 1024
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 20
+    accept-count: 100
+    connection-timeout: 20000
+
+lifecycle:
+  timeout-per-shutdown-phase: 30s
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  health:
+    redis:
+      enabled: true
+  metrics:
+    tags:
+      application: api-gateway
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+logging:
+  config: classpath:api-gateway-logback-spring.xml
+  level:
+    root: INFO
+    com.bicosteve.api_gateway: ${LOGGING_LEVEL:INFO}
+    org.springframework: WARN
+    org.springframework.jdbc: WARN
+    org.apache.coyote: WARN
+
+mailgun:
+  api-key: ${MAILGUN_API_KEY}
+  base-url: ${MAILGUN_BASE_URL}
+  sandbox: ${MAILGUN_SANDBOX}
+  from: ${MAILGUN_FROM}
+
+chapa:
+  secret-key: ${CHAPA_SECRET_KEY}
+  base-url: ${CHAPA_BASE_URL}
+  webhook-secret: ${CHAPA_WEBHOOK_SECRET}
+  currency: ${CHAPA_CURRENCY}
+  callback-url: ${CHAPA_CALLBACK_URL}
+  return-url: ${CHAPA_RETURN_URL}
