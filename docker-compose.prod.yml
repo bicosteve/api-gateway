@@ -1,0 +1,81 @@
+# =====================================================================
+# Production stack (runs on the EC2 / VM host)
+# ---------------------------------------------------------------------
+# Pulls the pre-built image from Docker Hub (tag supplied by the CI/CD
+# deploy job via the IMAGE_TAG env var) and runs it with the `prod`
+# Spring profile, which emits JSON logs to stdout. A Grafana Alloy
+# sidecar tails the container logs and ships them to Loki.
+# =====================================================================
+
+services:
+  api-gateway:
+    image: "${DOCKERHUB_USERNAME:-bixoloo/api-gateway}:${IMAGE_TAG:-latest}"
+    container_name: api-gateway
+    restart: unless-stopped
+
+# If service is public
+#    ports:
+#      - "${APP_PORT:-5001}:${APP_PORT:-5001}"
+
+
+# Service behind nginx
+    ports:
+      - "127.0.0.0.1:${APP_PORT:-5001}:${APP_PORT:-5001}"
+
+    env_file:
+      - .env
+
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      APP_PORT: ${APP_PORT:-5001}
+      LOGGING_LEVEL: ${LOGGING_LEVEL:-INFO}
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+    healthcheck:
+      test: ["CMD SHELL", "curl -fsS http://localhost:${APP_PORT:-5001}/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+    networks:
+      - api-gateway-net
+
+  alloy:
+    image: grafana/alloy:latest
+    container_name: api-gateway-alloy
+    restart: unless-stopped
+    depends_on:
+      - api-gateway
+
+    env_file:
+      - .env
+
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - /etc/alloy/config.alloy
+
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - api-gateway-net
+
+
+networks:
+  api-gateway-net:
+    name: api-gateway-net
