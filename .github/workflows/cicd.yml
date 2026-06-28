@@ -400,10 +400,10 @@ jobs:
       - name: Ensure deployment directory exists
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: $${{ secrects.VM_HOST }}
-          username: $${{ secrects.EC2_USER }}
-          key: $${{ secrects.VM_SSH_KEY }}
-          port: $${{ secrects.VM_SSH_PORT || 22 }}
+          host: $${{ secrets.VM_HOST }}
+          username: $${{ secrets.EC2_USER }}
+          key: $${{ secrets.VM_SSH_KEY }}
+          port: $${{ secrets.VM_SSH_PORT || 22 }}
           script: |
             set -euo pipefail
             DEPLOY_DIR=${{ secrets.DEPLOY_PATH }}
