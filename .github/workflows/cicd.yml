@@ -24,9 +24,10 @@ on:
 
 env:
   # Build Configs
-  DOCKER_IMAGE_NAME: api-gateway
   JAVA_VERSION: "21"
   JAVA_DISTRIBUTION: "temurin"
+  DOCKER_IMAGE: bixoloo/api-gateway
+  DOCKER_IMAGE_NAME: api-gateway
 
 
 jobs:
@@ -353,7 +354,6 @@ jobs:
 
       - name: Resolve image tag
         id: tag
-        shell: bash
         run: |
           TAG="${{ github.event.inputs.image_tag }}"
           if [ -z "$TAG" ]; then
@@ -361,7 +361,7 @@ jobs:
           fi
           
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "Deploying image tag: $TAG"
+          echo "Will deploy image tagged: $TAG"
 
       - name: Ensure deployment directory exists
         uses: appleboy/ssh-action@v1.2.0
@@ -391,7 +391,7 @@ jobs:
             echo "Directory ready: "
             ls -la "${DEPLOY_DIR}"
 
-      - name: Copy the deployment files to the EC2/VM host
+      - name: Copy the deployment files to the VM
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VM_HOST }}
@@ -404,12 +404,15 @@ jobs:
 
       - name: Pull the image and restart the stack
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          IMAGE_TAG: ${{ steps.tag.outputs.tag }}
+          DOCKER_IMAGE: ${{ env.DOCKER_IMAGE }}
         with:
           host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_SSH_KEY }}
           port: ${{ secrets.VM_SSH_PORT || 22 }}
-          envs: IMAGE_TAG,DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,DOCKER_IMAGE_NAME
+          envs: IMAGE_TAG,DOCKER_IMAGE
           script: |
             set -euo pipefail
 
@@ -420,14 +423,14 @@ jobs:
               echo "::ERROR::.env not found in ${DEPLOY_PATH}. Create it before deploying."
               exit 1
             fi
+            
+            # Make the resolved image tag available to docker-compose
+            export DOCKER_IMAGE="${DOCKER_IMAGE}"
+            export IMAGE_TAG="${IMAGE_TAG:-latest}"
+            
+            echo "Image to deploy: ${DOCKER_IMAGE}:${IMAGE_TAG}"
 
             echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
-
-            # Make the resolved image tag available to docker-compose
-            export DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME}"
-            export IMAGE_TAG="${IMAGE_TAG}"
-            
-            echo "Image to deploy: ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG}"
 
             echo "Pulling image tag '${IMAGE_TAG}' from Docker Hub..."
             docker compose -f docker-compose.prod.yml --env-file .env pull
@@ -452,10 +455,6 @@ jobs:
 
             echo "Logging out of Docker Hub..."
             docker logout || true
-        env:
-          IMAGE_TAG: ${{ steps.tag.outputs.tag }}
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   summary:
     name: Pipeline Summary
