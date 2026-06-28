@@ -99,6 +99,11 @@ jobs:
             chmod +x mvnw
           fi
 
+      - name: Install MySQL & Redis Clients
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y redis-tools mysql-client
+
       - name: Wait for MySQL
         run: |
           echo "**** Waiting for MySQL... ****"
