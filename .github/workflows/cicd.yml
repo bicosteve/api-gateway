@@ -407,12 +407,14 @@ jobs:
         env:
           IMAGE_TAG: ${{ steps.tag.outputs.tag }}
           DOCKER_IMAGE: ${{ env.DOCKER_IMAGE }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         with:
           host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_SSH_KEY }}
           port: ${{ secrets.VM_SSH_PORT || 22 }}
-          envs: IMAGE_TAG,DOCKER_IMAGE
+          envs: IMAGE_TAG,DOCKER_IMAGE,DOCKERHUB_USERNAME,DOCKERHUB_TOKEN
           script: |
             set -euo pipefail
 
