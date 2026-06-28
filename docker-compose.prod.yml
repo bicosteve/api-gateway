@@ -9,7 +9,7 @@
 
 services:
   api-gateway:
-    image: "${DOCKERHUB_USERNAME:-bixoloo/api-gateway}:${IMAGE_TAG:-latest}"
+    image: "${DOCKER_IMAGE:-bixoloo/api-gateway}:${IMAGE_TAG:-latest}"
     container_name: api-gateway
     restart: unless-stopped
 
