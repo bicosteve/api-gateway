@@ -13,11 +13,6 @@ services:
     container_name: api-gateway
     restart: unless-stopped
 
-# If service is public
-#    ports:
-#      - "${APP_PORT:-5001}:${APP_PORT:-5001}"
-
-
 # Service behind nginx
     ports:
       - "127.0.0.0.1:${APP_PORT:-5001}:${APP_PORT:-5001}"
