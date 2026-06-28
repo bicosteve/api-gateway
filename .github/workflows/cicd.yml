@@ -84,56 +84,13 @@ jobs:
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: ${{ env.JAVA_DISTRIBUTION }}
-
-      - name: Download maven
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
+          cache: maven
 
       - name: Make Maven wrapper executable if present
         run: |
-          if [-f mvnw ]; then
+          if [ -f mvnw ]; then
             chmod +x mvnw
           fi
-
-      - name: Install MySQL & Redis Clients
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y redis-tools mysql-client
-
-      - name: Wait for MySQL
-        run: |
-          echo "**** Waiting for MySQL... ****"
-          for i in {1..30}; do
-            if mysqladmin ping -h 127.0.0.1 -u root -proot --silent; then
-              echo "MySQL is ready"
-              exit 0
-            fi
-            echo "Attempt $i..."
-            sleep 2
-          done
-          
-          echo "::ERROR::MySQL did not become ready in time"
-          exit 1
-
-      - name: Wait for Redis
-        run: |
-          echo "**** Waiting for Redis... ****"
-          for i in {1..30}; do
-            if redis-cli -h 127.0.0.1 -p 6379 ping | grep -q PONG; then
-              echo "Redis is ready"
-              exit 0
-            fi
-          
-          echo "Attempt $i..."
-          sleep 2
-          done
-          
-          echo "::ERROR::Redis did not become ready in time"
-          exit 1
 
       - name: Run Tests
         run: |
