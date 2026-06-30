@@ -33,7 +33,7 @@ services:
 
 
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:${APP_PORT:-5001}/api/health || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:${APP_PORT:-5001}/api/health/test || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 5
