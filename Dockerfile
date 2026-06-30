@@ -13,7 +13,10 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-RUN addgroup -S usr && adduser -S usr -G usr
+RUN apk add --no-cache curl \
+    && addgroup -S usr \
+    && adduser -S usr -G usr
+
 
 COPY --from=build /app/target/*.jar app.jar
 
