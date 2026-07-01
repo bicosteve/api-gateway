@@ -1,94 +1,126 @@
-# 🏟️ Sportsbook API Gateway
+<p align="center">
+  <h1 align="center">Sportsbook API Gateway</h1>
 
-![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen?logo=springboot)
-![MySQL](https://img.shields.io/badge/MySQL-8.0-blue?logo=mysql)
-![Redis](https://img.shields.io/badge/Redis-7.0-red?logo=redis)
-![License](https://img.shields.io/badge/License-Portfolio-lightgrey)
+  <a href="https://github.com/bicosteve/api-gateway/actions/workflows/cicd.yml">
+    <img src="https://github.com/bicosteve/api-gateway/actions/workflows/cicd.yml/badge.svg" alt="CICD" />
+  </a>
+  <img src="https://img.shields.io/badge/Java-21-orange?logo=openjdk" alt="Java" />
+  <img src="https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen?logo=springboot" alt="Spring Boot" />
+  <img src="https://img.shields.io/badge/MySQL-8.0-blue?logo=mysql" alt="MySQL" />
+  <img src="https://img.shields.io/badge/Redis-7.0-red?logo=redis" alt="Redis" />
+  <img src="https://img.shields.io/badge/Docker-bixoloo%2Fapi--gateway-2496ED?logo=docker" alt="Docker" />
+  <img src="https://img.shields.io/badge/tests-250%20passing-success" alt="Tests" />
+  <img src="https://img.shields.io/badge/License-Portfolio-lightgrey" alt="License" />
 
-A production-grade RESTful API backend for a sports betting platform, built with **Spring Boot 3.5** and **Java 21**. This service serves as the central API gateway handling user authentication, sports event management, bet placement with complex odds computation, wallet operations, and payment processing via [Chapa](https://chapa.co/) — a leading African payment gateway.
+  <br />
+  <br />
 
-> **Live API Docs:** Swagger UI available at `/swagger-ui.html` when running locally.
+  A production-grade RESTful API backend for a sports betting platform, built with <strong>Spring Boot 3.5</strong> and <strong>Java 21</strong>. It serves as the central API gateway handling user authentication, sports event management, bet placement with odds computation, wallet operations, and payment processing via <a href="https://chapa.co/">Chapa</a>.
+</p>
 
 ---
 
-## ⚡ Quick Start
+## Problem
+
+In Kenya, the Government (GoK) raised the **minimum bet amount from 1 KES to 20 KES**. That 20x jump prices out a segment of players: people who *want* to place a bet but don't have the required cash on hand to meet the new minimum stake.
+
+**This platform addresses that gap with a bonus-first onboarding model:**
+
+- Every newly **verified account is awarded a welcome freebet** (bonus balance) at signup.
+- Bets can be placed using either **real balance or bonus balance** (`is_bonus` flag on every bet), so a cash-short user can still meet the 20 KES minimum stake using their bonus.
+- The **wallet tracks `balance` and `bonus` separately**, letting the platform seed promotional funds without touching real money and giving new users a frictionless path to their first bet.
+
+The result: users who couldn't previously afford the raised minimum can still participate, and the platform has a built-in acquisition mechanism aligned with the regulatory change.
+
+---
+
+## Live Demo
+
+> **Live API Docs (Swagger UI):** `https://<your-deployed-host>/swagger-ui.html`
+>
+> _TODO: replace `<your-deployed-host>` with the deployed base URL. When running locally, the docs are available at [http://localhost:5001/swagger-ui.html](http://localhost:5001/swagger-ui.html)._
+
+---
+
+## Screenshots / Demo
+
+> _TODO: add real assets under `docs/screenshots/` and reference them below._
+
+| Swagger UI | Bet Slip Flow |
+|---|---|
+| ![Swagger UI](docs/screenshots/swagger-ui.png) | ![Bet flow](docs/screenshots/bet-flow.gif) |
+
+_To add media:_
 
 ```bash
-git clone https://github.com/bicosteve/api-gateway.git
-cd api-gateway
-cp .example.env .env   # fill in your credentials
-./mvnw spring-boot:run
+mkdir -p docs/screenshots
+# drop swagger-ui.png, bet-flow.gif, etc. into docs/screenshots/
 ```
 
-Open [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+---
+
+## Table of Contents
+
+- [Problem](#problem)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Architecture Overview](#architecture-overview)
+- [Project Structure](#project-structure)
+- [Routes Overview](#routes-overview)
+- [Database Schema](#database-schema)
+- [Getting Started](#getting-started)
+- [Running Tests](#running-tests)
+- [CI/CD](#cicd)
+- [Security Notes](#security-notes)
+- [Known Limitations & Future Improvements](#known-limitations--future-improvements)
+- [Author](#author)
 
 ---
 
-## 📋 Table of Contents
+## Features
 
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Architecture](#-architecture)
-- [API Endpoints](#-api-endpoints)
-- [Database Schema](#-database-schema)
-- [Security](#-security)
-- [Getting Started](#-getting-started)
-- [Project Structure](#-project-structure)
-- [Key Design Decisions](#-key-design-decisions)
-- [Future Improvements](#-future-improvements)
-- [Author](#-author)
+### Authentication & Authorization
+- **JWT-based authentication** with a dual-token strategy (short-lived access token + long-lived refresh token)
+- Refresh token returned in an **HttpOnly cookie** for XSS protection
+- **Phone number-based registration** with OTP verification delivered via Mailgun
+- **BCrypt password hashing** and stateless session management
 
----
+### Bet Management
+- **Multi-slip bet creation** with automatic total-odds and possible-win computation
+- **Duplicate-event validation** — prevents multiple slips on the same event
+- **Expired-event validation** — rejects bets on events that have already started
+- **Bonus vs. real balance** staking via the `is_bonus` flag (enables the freebet model above)
+- **Time-based filtering** (day / week / month / all) with offset-based pagination and `hasNext` / `hasPrevious` navigation
+- Efficient N+1-free bet-slip joins via custom `ResultSetExtractor`
 
-## ✨ Features
-
-### 🔐 Authentication & Authorization
-- **JWT-based authentication** with dual-token strategy (short-lived access token + long-lived refresh token)
-- **Refresh token rotation** stored in HttpOnly cookies for enhanced security
-- **Phone number-based registration** with OTP verification via Mailgun email service
-- **BCrypt password hashing** for secure credential storage
-- **Stateless session management** — no server-side session storage required
-
-### 🎯 Bet Management
-- **Multi-slip bet creation** with automatic total odds and possible win computation
-- **Duplicate event validation** — prevents users from placing multiple slips on the same event
-- **Expired event validation** — rejects bets on events that have already started
-- **Time-based filtering** — filter bets by day, week, month, or all-time
-- **Cursor-based pagination** with `hasNext`/`hasPrevious` navigation
-- **Complex N+1 query resolution** using custom `ResultSetExtractor` for efficient bet-slip joins
-
-### 📅 Event Management
-- **Upcoming events feed** with nested teams, markets, participants, prices, and live scores
+### Event Management
+- **Upcoming events feed** with nested teams, markets, participants, prices, and scores
 - **Single event detail** view with full market depth
-- **Complex multi-table JOINs** resolved via custom `ResultSetExtractor` implementations
-- **UTC-based event filtering** — only future events are returned
+- Complex multi-table JOINs resolved via custom `ResultSetExtractor` implementations
+- UTC-based filtering — only future events are returned
 
-### 💳 Payment Processing (Chapa Integration)
-- **Deposit initiation** with Chapa-hosted checkout page
-- **Webhook handling** with **HMAC-SHA256 signature verification** to prevent spoofed callbacks
-- **Idempotent transaction processing** — duplicate webhooks are safely ignored
-- **Automatic wallet crediting** upon successful payment verification
-- **Transaction audit trail** — every deposit is logged in the transactions table
+### Payment Processing (Chapa)
+- **Deposit initiation** via Chapa-hosted checkout
+- **Webhook handling** with **HMAC-SHA256 signature verification** to reject spoofed callbacks
+- **Idempotent processing** — duplicate webhooks are safely ignored
+- **Automatic wallet crediting** and a full transaction audit trail
 
-### 💰 Wallet System
-- **Balance and bonus tracking** per user profile
+### Wallet System
+- Separate **real balance and bonus** tracking per profile
 - **Non-negative balance constraint** enforced at the database level
-- **Credit/debit operations** with full transaction history
+- Credit/debit operations with transaction history
 
-### 🛡️ Error Handling & Validation
-- **Global exception handler** (`@RestControllerAdvice`) with typed exceptions for every domain scenario
-- **Custom validators** — phone number format, password matching, slip uniqueness
-- **Jakarta Bean Validation** annotations on all request DTOs
-- **Structured error responses** with HTTP status codes, timestamps, and validation field errors
+### Error Handling & Validation
+- **Global exception handler** (`@RestControllerAdvice`) with typed domain exceptions
+- **Custom validators** (phone format, password matching, slip uniqueness) + Jakarta Bean Validation
+- Structured error responses with status codes, timestamps, and field errors
 
-### 📖 API Documentation
-- **SpringDoc OpenAPI 3** with Swagger UI
-- **Detailed annotations** on every endpoint including request/response schemas, security requirements, and example payloads
+### API Documentation
+- **SpringDoc OpenAPI 3** with Swagger UI and detailed per-endpoint annotations
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Category | Technology |
 |---|---|
@@ -98,168 +130,210 @@ Open [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.ht
 | **Database** | MySQL 8+ (InnoDB, utf8mb4) |
 | **Data Access** | Spring JdbcTemplate (raw SQL with custom RowMappers & ResultSetExtractors) |
 | **Caching** | Redis (Spring Data Redis) — OTP storage with TTL |
-| **Payment Gateway** | Chapa (Ethiopian payment processor) |
+| **Payment Gateway** | Chapa |
 | **Email Service** | Mailgun (OTP delivery) |
 | **API Docs** | SpringDoc OpenAPI 2.8.9 (Swagger UI) |
-| **Validation** | Jakarta Validation API, Custom Validators |
+| **Validation** | Jakarta Validation API, custom validators |
 | **Build Tool** | Maven (with Maven Wrapper) |
-| **Utilities** | Lombok, Unirest HTTP Client |
-| **Logging** | Logback (custom XML configuration with daily rotation) |
+| **Testing** | JUnit 5, Mockito, Spring Security Test |
+| **Observability** | Logback + Logstash JSON encoder → Grafana Alloy → Loki |
+| **Containerization** | Docker (multi-stage), Docker Compose |
+| **CI/CD** | GitHub Actions → Docker Hub → SSH deploy |
 
 ---
 
-## 🏗️ Architecture
+## Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                      Client (Web/Mobile)                 │
+│ Client (Web/Mobile)                                     │
 └──────────────────────────┬──────────────────────────────┘
                            │ HTTPS
                            ▼
 ┌─────────────────────────────────────────────────────────┐
-│                   API Gateway (Spring Boot)              │
+│ API Gateway (Spring Boot)                               │
 │                                                         │
-│  ┌─────────────┐  ┌──────────────┐  ┌───────────────┐  │
-│  │  Controllers │  │   Security   │  │  Validation   │  │
-│  │  (REST API)  │  │ (JWT Filter) │  │  (Custom +    │  │
-│  │              │  │              │  │   Jakarta)    │  │
-│  └──────┬───────┘  └──────────────┘  └───────────────┘  │
-│         │                                               │
-│  ┌──────▼───────┐  ┌──────────────┐  ┌───────────────┐  │
-│  │   Services   │  │  Payments    │  │  Exceptions   │  │
-│  │  (Business   │  │  (Chapa      │  │  (Global      │  │
-│  │   Logic)     │  │   Service)   │  │   Handler)    │  │
-│  └──────┬───────┘  └──────┬───────┘  └───────────────┘  │
-│         │                 │                             │
-│  ┌──────▼─────────────────▼───────┐  ┌───────────────┐  │
-│  │        Repository Layer        │  │    Mappers    │  │
-│  │  (JdbcTemplate + RowMappers +  │  │  (DTO + Row)  │  │
-│  │   ResultSetExtractors)         │  │               │  │
-│  └──────┬─────────────────┬───────┘  └───────────────┘  │
-│         │                 │                             │
+│ ┌─────────────┐ ┌──────────────┐ ┌───────────────┐      │
+│ │ Controllers │ │   Security   │ │  Validation   │      │
+│ │ (REST API)  │ │ (JWT Filter) │ │  (Custom +    │      │
+│ │             │ │              │ │   Jakarta)    │      │
+│ └──────┬───────┘ └──────────────┘ └───────────────┘      │
+│        │                                                │
+│ ┌──────▼───────┐ ┌──────────────┐ ┌───────────────┐      │
+│ │  Services   │ │   Payments   │ │  Exceptions   │      │
+│ │ (Business    │ │    (Chapa    │ │   (Global    │      │
+│ │   Logic)     │ │   Service)   │ │   Handler)   │      │
+│ └──────┬───────┘ └──────┬───────┘ └───────────────┘      │
+│        │                │                               │
+│ ┌──────▼────────────────▼───────┐ ┌───────────────┐      │
+│ │       Repository Layer        │ │    Mappers    │      │
+│ │ (JdbcTemplate + RowMappers +  │ │  (DTO + Row)  │      │
+│ │     ResultSetExtractors)      │ │               │      │
+│ └──────┬─────────────────┬───────┘ └───────────────┘      │
+│        │                 │                              │
 └─────────┼─────────────────┼─────────────────────────────┘
           │                 │
-    ┌─────▼─────┐    ┌──────▼──────┐
-    │   MySQL   │    │    Redis    │
-    │ (Primary  │    │ (OTP Cache  │
-    │  Database)│    │  with TTL)  │
-    └───────────┘    └─────────────┘
+    ┌─────▼─────┐     ┌──────▼──────┐
+    │   MySQL   │     │    Redis    │
+    │ (Primary  │     │ (OTP Cache  │
+    │ Database) │     │  with TTL)  │
+    └───────────┘     └─────────────┘
 ```
-
-### Layered Architecture Overview
 
 | Layer | Responsibility |
 |---|---|
 | **Controllers** | REST endpoints, request/response mapping, Swagger annotations |
 | **Security** | JWT filter chain, token generation/validation, authentication provider |
 | **Services** | Business logic orchestration, transaction management |
-| **Payments** | Chapa API integration, webhook signature verification, deposit processing |
-| **Repository** | Raw SQL queries via JdbcTemplate, custom RowMappers and ResultSetExtractors |
+| **Payments** | Chapa integration, webhook signature verification, deposit processing |
+| **Repository** | Raw SQL via JdbcTemplate, custom RowMappers and ResultSetExtractors |
 | **Mappers** | DTO ↔ Model conversion, ResultSet → Domain object mapping |
 | **Validation** | Custom constraint validators, Jakarta Bean Validation |
 | **Exceptions** | Domain-specific exceptions, global error response formatting |
 
----
-
-## 📡 API Endpoints
-
-### Authentication
-
-| Method | Endpoint | Description | Auth Required |
-|---|---|---|---|
-| `POST` | `/api/auth/register` | Register a new user account | ❌ |
-| `POST` | `/api/auth/verify-account` | Verify account with OTP code | ❌ |
-| `POST` | `/api/auth/login` | Authenticate and receive JWT tokens | ❌ |
-| `POST` | `/api/auth/refresh` | Refresh expired access token | ❌ |
-| `GET` | `/api/auth/test` | Test endpoint (public) | ❌ |
-
-### Events
-
-| Method | Endpoint | Description | Auth Required |
-|---|---|---|---|
-| `GET` | `/api/event/all` | List upcoming events (paginated) | ❌ |
-| `GET` | `/api/event/{eventId}` | Get single event with full market depth | ❌ |
-
-### Bets
-
-| Method | Endpoint | Description | Auth Required |
-|---|---|---|---|
-| `POST` | `/api/bet/create` | Place a new bet with slips | ✅ |
-| `GET` | `/api/bet/all` | List user's bets (paginated, filterable) | ✅ |
-| `GET` | `/api/bet/{betId}` | Get a specific bet with all slips | ✅ |
-
-### Wallet
-
-| Method | Endpoint | Description | Auth Required |
-|---|---|---|---|
-| `GET` | `/api/wallet/balance` | Get wallet balance and bonus | ✅ |
-| `POST` | `/api/wallet/deposit` | Initiate a deposit via Chapa | ✅ |
-| `POST` | `/api/wallet/webhook/chapa` | Chapa payment webhook callback (internal) | ❌ |
-
-### Profile
-
-| Method | Endpoint | Description | Auth Required |
-|---|---|---|---|
-| `GET` | `/api/profile` | Get authenticated user's profile | ✅ |
-
-### Health
-
-| Method | Endpoint | Description | Auth Required |
-|---|---|---|---|
-| `GET` | `/api/health` | Health check endpoint | ❌ |
-
-> **Query Parameters for Pagination:**
-> - `limit` — Number of items per page (default: 10, max: 50)
-> - `offset` — Starting position for pagination (default: 0)
-> - `page` — Page number starting from 0
-> - `size` — Page size (default: 10)
-> - `filter` — Time-based filter for bets: `day`, `week`, `month`, `all`
+In production, application logs are emitted as JSON to stdout and shipped to Grafana Loki by a **Grafana Alloy** sidecar (see `docker-compose.prod.yml` and `alloy/config.alloy`).
 
 ---
 
-## 🗄️ Database Schema
+## Project Structure
 
 ```
-┌──────────────┐       ┌─────────────────────┐
-│   profile    │       │  profile_settings   │
-├──────────────┤       ├─────────────────────┤
-│ profile_id   │◄──────│ profile_id (FK)     │
-│ phone_number │       │ notifications       │
-│ email        │       │ theme               │
-│ password_hash│       │ language            │
-│ status       │       │ created_at          │
-│ is_verified  │       │ updated_at          │
-│ is_deleted   │       └─────────────────────┘
+api-gateway/
+├── src/
+│   ├── main/
+│   │   ├── java/com/bicosteve/api_gateway/
+│   │   │   ├── Main.java # Application entry point
+│   │   │   ├── config/ # Chapa, Jackson, Mailgun, OpenAPI, Redis, RestTemplate, Security
+│   │   │   ├── constants/ # Deposit/Transaction/Withdrawal status codes
+│   │   │   ├── controllers/ # Auth, Bet, Event, Health, Profile, Wallet
+│   │   │   ├── dto/
+│   │   │   │   ├── requests/ # Inbound request DTOs
+│   │   │   │   └── response/ # Outbound response DTOs
+│   │   │   ├── enums/ # Java enums
+│   │   │   ├── exceptions/ # Custom exceptions + GlobalExceptionHandler
+│   │   │   ├── mappers/
+│   │   │   │   ├── dtomappers/ # Model → DTO converters
+│   │   │   │   └── rowmappers/ # ResultSet → Model mappers
+│   │   │   ├── models/ # Domain models (POJOs)
+│   │   │   ├── payments/ # ChapaService (initiateDeposit, handleWebhook)
+│   │   │   ├── repository/ # JdbcTemplate data access
+│   │   │   ├── security/ # JWT + Spring Security
+│   │   │   ├── service/ # Business logic layer
+│   │   │   ├── utils/ # LogContext, TrxRefGenerator, OTP, Mailgun helpers
+│   │   │   └── validation/ # UniqueSlip custom validator
+│   │   └── resources/
+│   │       ├── application.yml # Base configuration
+│   │       ├── application-dev.yml # Dev profile
+│   │       ├── application-prod.yml # Prod profile (JSON logging, actuator)
+│   │       ├── schema.sql # Database DDL
+│   │       └── data.sql # Seed data (optional)
+│   └── test/ # 250 JUnit 5 / Mockito tests (42 classes)
+├── alloy/config.alloy # Grafana Alloy log-shipping config
+├── Dockerfile # Multi-stage production image
+├── Dockerfile.dev # Development image (hot reload)
+├── docker-compose.yml # Local dev stack (app + MySQL + Redis)
+├── docker-compose.prod.yml # Production stack (image + Alloy sidecar)
+├── .github/workflows/cicd.yml # CI/CD pipeline
+├── Makefile # Common dev commands
+├── .example.env # Environment variable template
+└── pom.xml
+```
+
+---
+
+## Routes Overview
+
+> Paths below reflect the actual controller mappings in `src/main/java/.../controllers`.
+
+### Authentication — `/api/auth`
+
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| `POST` | `/api/auth/register` | Register a new user account | No |
+| `POST` | `/api/auth/verify-account` | Verify account with OTP (awards welcome freebet) | No |
+| `POST` | `/api/auth/login` | Authenticate; returns access token + refresh token cookie | No |
+
+### Events — `/api/events`
+
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| `GET` | `/api/events/all` | List upcoming events (paginated) | No |
+| `GET` | `/api/events/{eventId}` | Get a single event with full market depth | No |
+
+### Bets — `/api/bet`
+
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| `POST` | `/api/bet/create` | Place a new bet with slips | Yes |
+| `GET` | `/api/bet/all` | List the user's bets (paginated, filterable) | Yes |
+| `GET` | `/api/bet/{betId}` | Get a specific bet with all its slips | Yes |
+
+### Wallet — `/api/wallet`
+
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| `POST` | `/api/wallet/deposit-chapa` | Initiate a deposit via Chapa | Yes |
+| `POST` | `/api/wallet/webhook/chapa` | Chapa payment webhook callback (internal) | No |
+
+### Profile — `/api/profile`
+
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| `GET` | `/api/profile/me` | Get the authenticated user's profile | Yes |
+
+### Health — `/api/health`
+
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| `GET` | `/api/health/test` | Health check (used by the prod container healthcheck) | No |
+
+> **Pagination query params:** `limit` (default 10, max 50), `offset` (default 0), `page` (from 0), `size` (default 10), `filter` (`day` \| `week` \| `month` \| `all`).
+
+---
+
+## Database Schema
+
+```
+┌──────────────┐     ┌─────────────────────┐
+│   profile    │     │  profile_settings   │
+├──────────────┤     ├─────────────────────┤
+│ profile_id   │◄────│ profile_id (FK)     │
+│ phone_number │     │ notifications       │
+│ email        │     │ theme               │
+│ password_hash│     │ language            │
+│ status       │     │ created_at          │
+│ is_verified  │     │ updated_at          │
+│ is_deleted   │     └─────────────────────┘
 │ created_at   │
 │ updated_at   │
 └──────┬───────┘
        │
        ├──────────────────────────────────────────┐
        │                                          │
-┌──────▼───────┐    ┌──────────────┐    ┌────────▼────────┐
-│    bets      │    │    wallet    │    │   transactions  │
-├──────────────┤    ├──────────────┤    ├─────────────────┤
-│ bet_id       │    │ id           │    │ id              │
-│ profile_id   │    │ profile_id   │    │ profile_id      │
-│ stake        │    │ balance      │    │ reference       │
-│ is_bonus     │    │ bonus        │    │ type            │
-│ status       │    │ created_by   │    │ amount          │
-│ total_odds   │    └──────────────┘    │ status          │
-│ possible_win │                        │ created_by      │
-│ created_at   │    ┌──────────────┐    └─────────────────┘
-│ updated_at   │    │   deposits   │
-└──────┬───────┘    ├──────────────┤    ┌─────────────────┐
-       │            │ id           │    │  withdrawals    │
-┌──────▼───────┐    │ profile_id   │    ├─────────────────┤
-│  bet_slips   │    │ trx_ref      │    │ id              │
-├──────────────┤    │ amount       │    │ profile_id      │
-│ bet_slip_id  │    │ currency     │    │ tx_ref          │
-│ bet_id (FK)  │    │ checkout_url │    │ amount          │
-│ event_id     │    │ chapa_ref    │    │ channel         │
-│ sport_id     │    │ status       │    │ status          │
-│ team_id      │    │ created_at   │    │ approved_by     │
-│ market_id    │    │ updated_at   │    │ reason          │
-│ market_name  │    └──────────────┘    └─────────────────┘
+┌──────▼───────┐     ┌──────────────┐     ┌────────▼────────┐
+│     bets     │     │    wallet    │     │  transactions   │
+├──────────────┤     ├──────────────┤     ├─────────────────┤
+│ bet_id       │     │ id           │     │ id              │
+│ profile_id   │     │ profile_id   │     │ profile_id      │
+│ stake        │     │ balance      │     │ reference       │
+│ is_bonus     │     │ bonus        │     │ type            │
+│ status       │     │ created_by   │     │ amount          │
+│ total_odds   │     └──────────────┘     │ status          │
+│ possible_win │                          │ created_by      │
+│ created_at   │     ┌──────────────┐     └─────────────────┘
+│ updated_at   │     │   deposits   │
+└──────┬───────┘     ├──────────────┤     ┌─────────────────┐
+       │             │ id           │     │   withdrawals   │
+┌──────▼───────┐     │ profile_id   │     ├─────────────────┤
+│  bet_slips   │     │ trx_ref      │     │ id              │
+├──────────────┤     │ amount       │     │ profile_id      │
+│ bet_slip_id  │     │ currency     │     │ tx_ref          │
+│ bet_id (FK)  │     │ checkout_url │     │ amount          │
+│ event_id     │     │ chapa_ref    │     │ channel         │
+│ sport_id     │     │ status       │     │ status          │
+│ team_id      │     │ created_at   │     │ approved_by     │
+│ market_id    │     │ updated_at   │     │ reason          │
+│ market_name  │     └──────────────┘     └─────────────────┘
 │ participant  │
 │ odds         │
 │ special_bet  │
@@ -269,107 +343,55 @@ Open [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.ht
 └──────────────┘
 ```
 
-### Key Tables
-
-| Table | Purpose |
-|---|---|
-| `profile` | User accounts with phone number, email, and hashed password |
-| `profile_settings` | User preferences — notifications, theme, language |
-| `bets` | Bet records with stake, total odds, and possible winnings |
-| `bet_slips` | Individual selections within a bet (event, market, odds) |
-| `wallet` | User wallet with real balance and bonus balance |
-| `deposits` | Payment deposit records linked to Chapa transactions |
-| `transactions` | Audit trail for all financial operations |
-| `withdrawals` | Withdrawal requests with manual approval workflow |
-
-> **Note:** Event data (events, teams, markets, participants, prices, scores) is sourced from an external sports data provider (Rundown API) and stored in separate tables (`rundown_event`, `teams`, `markets`, `participants`, `prices`, `scores`).
+> **Note:** Event data (events, teams, markets, participants, prices, scores) is sourced from an external sports data provider and stored in separate tables (`rundown_event`, `teams`, `markets`, `participants`, `prices`, `scores`).
 
 ---
 
-## 🔒 Security
-
-### Authentication Flow
-
-```
-1. REGISTER
-   Client → POST /api/auth/register (phone, password, email)
-   Server → Creates profile (unverified), generates OTP, stores in Redis (5hr TTL)
-   Server → Sends OTP via Mailgun email
-
-2. VERIFY
-   Client → POST /api/auth/verify-account (phone, otp)
-   Server → Validates OTP against Redis, marks profile as verified
-   Server → Creates wallet, awards welcome freebet
-
-3. LOGIN
-   Client → POST /api/auth/login (phone, password)
-   Server → Returns accessToken (1hr) + refreshToken (7 days, HttpOnly cookie)
-
-4. AUTHENTICATED REQUEST
-   Client → GET /api/bet/all (Authorization: Bearer <accessToken>)
-   Server → JwtAuthenticationFilter validates token, extracts claims
-
-5. TOKEN REFRESH
-   Client → POST /api/auth/refresh (refreshToken in Authorization header)
-   Server → Validates refresh token, issues new accessToken
-```
-
-### Security Measures
-
-| Measure | Implementation |
-|---|---|
-| **Password Storage** | BCrypt hashing with automatic salt generation |
-| **Token Signing** | HMAC-SHA256 with configurable secret key |
-| **Session Management** | Stateless — no server-side sessions |
-| **CSRF Protection** | Disabled (stateless API with Bearer token auth) |
-| **Refresh Tokens** | Stored in HttpOnly cookies, not accessible via JavaScript |
-| **Webhook Verification** | HMAC-SHA256 signature verification on Chapa callbacks |
-| **OTP Storage** | Redis with 5-hour TTL, deleted after successful verification |
-| **Input Validation** | Jakarta Bean Validation + custom validators on all endpoints |
-| **SQL Injection** | Parameterized queries via JdbcTemplate PreparedStatement |
-| **Error Exposure** | Structured error responses — no stack traces in production |
-
----
-
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
 - **Java 21+** (JDK)
-- **MySQL 8.0+**
-- **Redis 7.0+**
-- **Maven 3.9+** (or use the included Maven Wrapper `./mvnw`)
-- **Chapa API credentials** (for payment features)
-- **Mailgun API credentials** (for OTP email delivery)
-- **ngrok** (for local Chapa webhook testing)
+- **MySQL 8.0+** and **Redis 7.0+** (or use Docker Compose below)
+- **Maven 3.9+** (or the included wrapper `./mvnw`)
+- **Chapa** and **Mailgun** API credentials (for payments and OTP email)
 
-### Installation
-
-**1. Clone the repository**
+### Run with Docker Compose (recommended)
 
 ```bash
 git clone https://github.com/bicosteve/api-gateway.git
 cd api-gateway
+cp .example.env .env # fill in your credentials
+
+# Starts the app, MySQL, and Redis together
+docker compose up --build
 ```
 
-**2. Configure environment variables**
+The API starts on `http://localhost:5001` (override with `APP_PORT` in `.env`).
 
-Copy the example environment file and fill in your credentials:
+### Run locally with Maven
 
 ```bash
-cp .example.env .env
+cp .example.env .env # fill in your credentials, then export them or use a dotenv loader
+
+# Using the Maven Wrapper
+./mvnw spring-boot:run
+
+# Or via Make
+make run
 ```
 
-Edit `.env` with your configuration:
+Then open Swagger UI: [http://localhost:5001/swagger-ui.html](http://localhost:5001/swagger-ui.html)
+
+### Environment variables
+
+Key variables from `.example.env`:
 
 ```properties
-# Server
-SERVER_PORT=8080
+APP_PORT=5001
 
 # Database
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=sportsbook
+DB_URL=jdbc:mysql://localhost:3306/sportsbook?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
 DB_USERNAME=root
 DB_PASSWORD=your_password
 
@@ -379,10 +401,10 @@ REDIS_PORT=6379
 
 # JWT
 JWT_SECRET=your-256-bit-secret-key-here
-JWT_ACCESS_TOKEN_EXPIRATION=3600000
-JWT_REFRESH_TOKEN_EXPIRATION=604800000
+ACCESS_TOKEN_EXPIRATION=3600000
+REFRESH_TOKEN_EXPIRATION=604800000
 
-# Chapa Payment Gateway
+# Chapa
 CHAPA_BASE_URL=https://api.chapa.co/v1
 CHAPA_SECRET_KEY=CHASECK_TEST-your_key_here
 CHAPA_WEBHOOK_SECRET=your_generated_webhook_secret
@@ -390,194 +412,117 @@ CHAPA_CURRENCY=ETB
 CHAPA_CALLBACK_URL=https://your-ngrok-url.ngrok-free.app/api/wallet/webhook/chapa
 CHAPA_RETURN_URL=http://localhost:3000/deposit/success
 
-# Mailgun Email
+# Mailgun
 MAILGUN_API_KEY=your_mailgun_api_key
-MAILGUN_DOMAIN=your_mailgun_sandbox_domain
-MAILGUN_FROM_EMAIL=noreply@yourdomain.com
-```
-
-**3. Initialize the database**
-
-```bash
-# Create the database
-mysql -u root -p -e "CREATE DATABASE sportsbook CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-
-# Schema auto-initializes from schema.sql on first run
-# Or manually run:
-mysql -u root -p sportsbook < src/main/resources/schema.sql
-```
-
-**4. Start Redis**
-
-```bash
-# Using Homebrew (macOS)
-brew services start redis
-
-# Or using Docker
-docker run -d --name redis -p 6379:6379 redis:7-alpine
-```
-
-**5. Run the application**
-
-```bash
-# Using Maven Wrapper (recommended)
-./mvnw spring-boot:run
-
-# Or using Make
-make run
-
-# Or build and run the JAR
-./mvnw clean package -DskipTests
-java -jar target/api-gateway-0.0.1-SNAPSHOT.jar
-```
-
-The server starts on `http://localhost:8080` by default.
-
-**6. Access Swagger UI**
-
-Navigate to: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-
-**7. Testing Chapa webhooks locally**
-
-```bash
-# Expose localhost to the internet for Chapa webhook delivery
-ngrok http --domain=yourname.ngrok-free.app 8080
-
-# Update CHAPA_CALLBACK_URL in .env with your ngrok URL
-# Inspect incoming webhooks at http://127.0.0.1:4040
+MAILGUN_BASE_URL=https://api.mailgun.net
+MAILGUN_SANDBOX=your_mailgun_sandbox_domain
+MAILGUN_FROM=noreply@yourdomain.com
 ```
 
 ---
 
-## 📁 Project Structure
+## Running Tests
 
+The suite is **250 tests across 42 classes**, written with **JUnit 5 + Mockito**. Tests use constructor-injected mocks (no live database required), so they run fast in CI and locally.
+
+```bash
+# Run the full test suite
+./mvnw test
+
+# Or via Make
+make tests
+
+# Run a single test class
+make test # runs HealthCheckTest
+./mvnw test -Dtest=com.bicosteve.api_gateway.service.BetServiceTest
 ```
-api-gateway/
-├── src/
-│   ├── main/
-│   │   ├── java/com/bicosteve/api_gateway/
-│   │   │   ├── Main.java                          # Application entry point
-│   │   │   ├── config/                            # Configuration classes
-│   │   │   │   ├── ChapaConfig.java               # Chapa payment config
-│   │   │   │   ├── JacksonConfig.java             # JSON serialization config
-│   │   │   │   ├── MailgunConfig.java             # Email service config
-│   │   │   │   ├── OpenApiConfig.java             # Swagger/OpenAPI config
-│   │   │   │   ├── RedisConfig.java               # Redis connection config
-│   │   │   │   ├── RestTemplateConfig.java        # HTTP client with timeouts
-│   │   │   │   └── SecurityConfig.java            # Spring Security filter chain
-│   │   │   ├── constants/                         # Status code constants
-│   │   │   │   ├── DepositStatus.java             # 0=pending, 1=success, 2=failed
-│   │   │   │   ├── TransactionStatus.java
-│   │   │   │   ├── TransactionType.java
-│   │   │   │   └── WithdrawalStatus.java
-│   │   │   ├── controllers/                       # REST API controllers
-│   │   │   │   ├── AuthControllers.java           # Registration, login, OTP
-│   │   │   │   ├── BetControllers.java            # Bet placement & history
-│   │   │   │   ├── EventControllers.java          # Sports events
-│   │   │   │   ├── HealthCheck.java               # Health endpoint
-│   │   │   │   ├── ProfileController.java         # User profile
-│   │   │   │   └── WalletControllers.java         # Wallet, deposits, webhook
-│   │   │   ├── dto/
-│   │   │   │   ├── requests/                      # Inbound request DTOs
-│   │   │   │   └── response/                      # Outbound response DTOs
-│   │   │   ├── enums/                             # Java enums
-│   │   │   ├── exceptions/                        # Custom exceptions
-│   │   │   │   └── GlobalExceptionHandler.java   # @RestControllerAdvice
-│   │   │   ├── mappers/
-│   │   │   │   ├── dtomappers/                    # Model → DTO converters
-│   │   │   │   └── rowmappers/                    # ResultSet → Model mappers
-│   │   │   ├── models/                            # Domain models (POJOs)
-│   │   │   ├── payments/                          # Chapa payment integration
-│   │   │   │   └── ChapaService.java             # initializeDeposit, handleWebhook
-│   │   │   ├── repository/                        # JdbcTemplate data access
-│   │   │   ├── security/                          # JWT + Spring Security
-│   │   │   │   ├── CustomUserDetails.java
-│   │   │   │   ├── CustomUserDetailsService.java
-│   │   │   │   ├── JwtAuthenticationFilter.java
-│   │   │   │   └── JwtService.java
-│   │   │   ├── service/                           # Business logic layer
-│   │   │   ├── utils/                             # Stateless helper utilities
-│   │   │   │   ├── LogContext.java                # MDC traceId / profileId
-│   │   │   │   └── TrxRefGenerator.java           # Unique transaction reference
-│   │   │   └── validation/                        # Custom constraint validators
-│   │   │       ├── UniqueSlip.java                # Custom annotation
-│   │   │       └── UniqueSlipValidator.java       # Validator implementation
-│   │   └── resources/
-│   │       ├── application.yml                    # Main configuration
-│   │       ├── application-dev.yml                # Dev profile overrides
-│   │       ├── api-gateway-logback.xml            # Logback with daily rotation
-│   │       ├── schema.sql                         # Database DDL
-│   │       └── data.sql                           # Seed data (optional)
-│   └── test/
-├── tables/                                        # SQL reference scripts
-├── .example.env                                   # Environment variable template
-├── Makefile                                       # Common dev commands
-├── pom.xml
-└── mvnw
-```
+
+Surefire reports are written to `target/surefire-reports/`. In CI these are uploaded as artifacts and evaluated by a **100%-pass-rate quality gate** (see below).
 
 ---
 
-## 🧠 Key Design Decisions
+## CI/CD
 
-### 1. Raw JDBC over JPA for Query-Heavy Operations
+[![CICD](https://github.com/bicosteve/api-gateway/actions/workflows/cicd.yml/badge.svg)](https://github.com/bicosteve/api-gateway/actions/workflows/cicd.yml)
 
-**Decision:** Spring JdbcTemplate with custom `RowMapper` and `ResultSetExtractor` implementations instead of JPA/Hibernate.
+The pipeline is defined in [`.github/workflows/cicd.yml`](.github/workflows/cicd.yml) and runs on pushes to `main`, `feat/*`, `fix/*`, and on pull requests.
 
-**Rationale:** The sportsbook domain involves deeply nested object graphs (Event → Teams → Markets → Participants → Prices) that produce massive Cartesian products when loaded via JPA entity mappings. Custom `ResultSetExtractor` implementations provide full control over result set iteration, enabling efficient de-duplication (e.g., preventing duplicate teams/markets in a single pass). Parameterized `PreparedStatement` usage ensures SQL injection protection while maintaining fine-grained control over query execution.
+```
+test ──► quality-gate ──► build ──► docker-build-push ──► deploy ──► summary
+```
 
-### 2. Dual-Token JWT Strategy
-
-**Decision:** Short-lived access token (1 hour) in the `Authorization` header + long-lived refresh token (7 days) in an `HttpOnly` cookie.
-
-**Rationale:** Access tokens are short-lived to minimize the window of exposure if compromised. Refresh tokens in `HttpOnly` cookies are inaccessible to JavaScript, preventing XSS-based token theft. The refresh endpoint allows seamless token renewal without re-authentication.
-
-### 3. Redis for OTP Storage
-
-**Decision:** OTP codes stored in Redis with a 5-hour TTL instead of the database.
-
-**Rationale:** OTPs are ephemeral by nature — Redis's native TTL expiration eliminates the need for cleanup jobs. `O(1)` lookup and delete operations enable fast verification. This approach decouples transient verification data from persistent user data.
-
-### 4. HMAC-SHA256 Webhook Verification
-
-**Decision:** Verify Chapa webhook signatures using HMAC-SHA256 before processing payment callbacks.
-
-**Rationale:** Webhook endpoints are publicly accessible — without signature verification, attackers could forge payment confirmations. The shared secret ensures only genuine Chapa callbacks are processed. Idempotency checks (deposit status == SUCCESS) prevent double-crediting even if duplicate webhooks arrive.
-
-### 5. Hosted Checkout over Direct API Integration
-
-**Decision:** Use Chapa's hosted checkout page instead of collecting payment details directly.
-
-**Rationale:** Chapa's hosted checkout offloads PCI DSS compliance entirely. Payment card details never touch the application server, eliminating a major security risk. Users also recognize and trust Chapa's checkout page, reducing drop-off rates.
-
-### 6. Database-Level Constraints
-
-**Decision:** Enforce business rules at the database level with `CHECK` constraints, `UNIQUE` indexes, and `FOREIGN KEY` relationships.
-
-**Rationale:** `CHECK (balance >= 0)` on wallets prevents negative balances regardless of application bugs. `UNIQUE` constraints on phone numbers and transaction references prevent duplicates at the data layer. Cascading foreign keys ensure referential integrity for profile-dependent records.
-
----
-
-## 🔮 Future Improvements
-
-| Area | Enhancement |
+| Job | What it does |
 |---|---|
-| **Containerization** | Docker Compose setup with MySQL, Redis, and the application for one-command local development |
-| **CI/CD Pipeline** | GitHub Actions workflow for automated testing, linting, and deployment |
-| **Unit & Integration Tests** | Comprehensive test coverage using JUnit 5, Mockito, and `@SpringBootTest` with Testcontainers |
-| **Rate Limiting** | Request throttling on authentication endpoints to prevent brute-force attacks |
-| **Admin Dashboard** | Separate admin API for managing events, approving withdrawals, and viewing platform analytics |
-| **WebSocket Live Scores** | Real-time score updates pushed to clients via WebSocket connections |
-| **Withdrawal Processing** | Full withdrawal workflow with admin approval and Chapa disbursement integration |
-| **Cursor-based Pagination** | Migrate from offset-based to cursor-based pagination for better performance at scale |
-| **API Versioning** | URL-based versioning (`/api/v1/`) to support backward-compatible changes |
-| **Monitoring & Observability** | Spring Actuator + Micrometer metrics with Prometheus/Grafana dashboards |
-| **Distributed Caching** | Extend Redis usage for event and market caching to reduce database load |
-| **Multi-Currency Support** | Extend wallet and payment processing to support additional currencies beyond ETB |
+| **test** | Spins up MySQL + Redis service containers and runs the full suite; uploads Surefire reports |
+| **quality-gate** | Parses the reports and **fails the pipeline unless the pass rate is 100%** |
+| **build** | Packages the JAR and uploads it as an artifact |
+| **docker-build-push** | On push to `main`, builds the image from the tested JAR and pushes to Docker Hub (`bixoloo/api-gateway`), tagged with the commit SHA and `latest` |
+| **deploy** | Manual (`workflow_dispatch`) — SSHes to the VM, pulls the image, and restarts the Compose stack (app + Grafana Alloy sidecar) |
+| **summary** | Prints a consolidated result for every job |
+
+The Docker image is built from the **exact JAR that was tested**, so the deployed artifact matches what passed CI.
 
 ---
 
-## 👤 Author
+## Security Notes
+
+### Authentication Flow
+
+```
+1. REGISTER
+   Client → POST /api/auth/register (phone, password, email)
+   Server → Creates unverified profile, generates OTP, stores it in Redis (TTL)
+   Server → Sends OTP via Mailgun email
+
+2. VERIFY
+   Client → POST /api/auth/verify-account (phone, otp)
+   Server → Validates OTP against Redis, marks profile verified
+   Server → Creates wallet and awards the welcome freebet (bonus balance)
+
+3. LOGIN
+   Client → POST /api/auth/login (phone, password)
+   Server → Returns accessToken + refreshToken (HttpOnly cookie)
+
+4. AUTHENTICATED REQUEST
+   Client → GET /api/bet/all (Authorization: Bearer <accessToken>)
+   Server → JwtAuthenticationFilter validates the token and extracts claims
+```
+
+### Security Measures
+
+| Measure | Implementation |
+|---|---|
+| **Password Storage** | BCrypt hashing with automatic salt generation |
+| **Token Signing** | HMAC-SHA256 with a configurable secret key |
+| **Session Management** | Stateless — no server-side sessions |
+| **CSRF** | Disabled (stateless API using Bearer tokens) |
+| **Refresh Tokens** | Delivered via HttpOnly cookie, inaccessible to JavaScript |
+| **Webhook Verification** | HMAC-SHA256 signature verification on Chapa callbacks |
+| **OTP Storage** | Redis with TTL, deleted after successful verification |
+| **Input Validation** | Jakarta Bean Validation + custom validators on all endpoints |
+| **SQL Injection** | Parameterized queries via JdbcTemplate PreparedStatement |
+| **Error Exposure** | Structured responses — stack traces disabled in the `prod` profile |
+
+---
+
+## Known Limitations & Future Improvements
+
+| Area | Notes |
+|---|---|
+| **Integration tests** | Current tests mock the persistence layer. The custom `ResultSetExtractor`/`RowMapper` SQL logic is not yet exercised against a real DB — add Testcontainers-based integration tests. |
+| **Webhook unit coverage** | Chapa HMAC verification is tested indirectly via the controller; add a direct unit test for the signature logic. |
+| **Deploy tag default** | The manual deploy defaults to the `latest` tag; prefer defaulting to a specific commit SHA for traceability. |
+| **Rate limiting** | No throttling on auth endpoints yet — add to mitigate brute-force attempts. |
+| **Withdrawal processing** | Withdrawal tables exist, but the full approval + Chapa disbursement workflow is not implemented. |
+| **Wallet balance endpoint** | Balance is tracked but not yet exposed via a dedicated read endpoint. |
+| **Cursor pagination** | Migrate from offset-based to cursor-based pagination for scale. |
+| **API versioning** | Introduce URL-based versioning (`/api/v1/`) for backward-compatible changes. |
+| **Security scanning** | Add dependency/image scanning (Dependabot, Trivy, CodeQL) to the pipeline. |
+| **Multi-currency** | Extend wallet and payments beyond a single currency. |
+
+---
+
+## Author
 
 **Bico Steve** — Lead Developer & Architect
 
@@ -587,7 +532,7 @@ api-gateway/
 
 ---
 
-## 📄 License
+## License
 
 This project is intended for portfolio and educational purposes.
 
