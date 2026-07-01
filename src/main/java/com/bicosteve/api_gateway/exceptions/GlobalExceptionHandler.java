@@ -134,18 +134,19 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
+    // 400 - Expired OTP (client must request a fresh code)
     @ExceptionHandler(OtpExpiredException.class)
-    public ResponseEntity<ErrorResponse> handlesInvalidOtp(
+    public ResponseEntity<ErrorResponse> handleExpiredOtp(
             OtpExpiredException ex)
     {
         ErrorResponse error = new ErrorResponse(
-                HttpStatus.GONE.value(),
+                HttpStatus.BAD_REQUEST.value(),
                 ex.getMessage(),
                 this.getCurrentTimestamp(),
                 null
         );
 
-        return new ResponseEntity<> (error, HttpStatus.GONE);
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(EventNotFoundException.class)
@@ -169,14 +170,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex
     ){
+        // Log the real cause server-side, but do not leak internal details to the client.
+        log.error("Unhandled exception", ex);
+
         ErrorResponse error = new ErrorResponse(
-                HttpStatus.GONE.value(),
-                ex.getMessage(),
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "An unexpected error occurred",
                 this.getCurrentTimestamp(),
                 null
         );
 
-        return new ResponseEntity<>(error,HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -215,6 +219,36 @@ public class GlobalExceptionHandler {
                         .message("A database error occurred")
                         .timestamp(this.getCurrentTimestamp())
                         .build());
+    }
+
+
+    // 401 - Invalid / missing / expired refresh token
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidToken(
+            InvalidTokenException ex){
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                ex.getMessage(),
+                this.getCurrentTimestamp(),
+                null
+        );
+
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    }
+
+
+    // 401 - Bad credentials (wrong password during login)
+    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentials(
+            org.springframework.security.authentication.BadCredentialsException ex){
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                "Invalid phone number or password",
+                this.getCurrentTimestamp(),
+                null
+        );
+
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
 

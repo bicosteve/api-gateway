@@ -5,6 +5,7 @@ import com.bicosteve.api_gateway.validation.PasswordMatches;
 import com.bicosteve.api_gateway.validation.ValidPhoneNumber;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -26,6 +27,7 @@ public class RegisterRequest {
 
     @Schema(example = "test@example.com")
     @NotBlank(message = "Email is required")
+    @Email(message = "Email must be a valid email address")
     @JsonProperty("email")
     private String email;
 

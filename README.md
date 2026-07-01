@@ -1,9 +1,7 @@
-<p align="center">
-  <h1 align="center">Sportsbook API Gateway</h1>
+<h1 align="center">Sportsbook API Gateway</h1>
 
-  <a href="https://github.com/bicosteve/api-gateway/actions/workflows/cicd.yml">
-    <img src="https://github.com/bicosteve/api-gateway/actions/workflows/cicd.yml/badge.svg" alt="CICD" />
-  </a>
+<p align="center">
+  <a href="https://github.com/bicosteve/api-gateway/actions/workflows/cicd.yml"><img src="https://github.com/bicosteve/api-gateway/actions/workflows/cicd.yml/badge.svg" alt="CICD" /></a>
   <img src="https://img.shields.io/badge/Java-21-orange?logo=openjdk" alt="Java" />
   <img src="https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen?logo=springboot" alt="Spring Boot" />
   <img src="https://img.shields.io/badge/MySQL-8.0-blue?logo=mysql" alt="MySQL" />
@@ -11,10 +9,9 @@
   <img src="https://img.shields.io/badge/Docker-bixoloo%2Fapi--gateway-2496ED?logo=docker" alt="Docker" />
   <img src="https://img.shields.io/badge/tests-250%20passing-success" alt="Tests" />
   <img src="https://img.shields.io/badge/License-Portfolio-lightgrey" alt="License" />
+</p>
 
-  <br />
-  <br />
-
+<p align="center">
   A production-grade RESTful API backend for a sports betting platform, built with <strong>Spring Boot 3.5</strong> and <strong>Java 21</strong>. It serves as the central API gateway handling user authentication, sports event management, bet placement with odds computation, wallet operations, and payment processing via <a href="https://chapa.co/">Chapa</a>.
 </p>
 
@@ -46,16 +43,9 @@ The result: users who couldn't previously afford the raised minimum can still pa
 
 > _TODO: add real assets under `docs/screenshots/` and reference them below._
 
-| Swagger UI | Bet Slip Flow |
-|---|---|
-| ![Swagger UI](docs/screenshots/swagger-ui.png) | ![Bet flow](docs/screenshots/bet-flow.gif) |
-
-_To add media:_
-
-```bash
-mkdir -p docs/screenshots
-# drop swagger-ui.png, bet-flow.gif, etc. into docs/screenshots/
-```
+| Swagger UI                                           | Bet Slip Flow |
+|------------------------------------------------------|---|
+| ![Swagger UI](./screenshots/api-gateway-swagger.png) | ![Bet flow](docs/screenshots/bet-flow.gif) |
 
 ---
 

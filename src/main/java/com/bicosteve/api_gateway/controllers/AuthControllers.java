@@ -159,12 +159,67 @@ public class AuthControllers {
     })
     public ResponseEntity<LoginResponse> loginUser(
             @Valid @RequestBody LoginRequest request
-            ){
+    ){
         LoginResponse tokens = this.profileService.generateLoginToken(request,this.response);
         return ResponseEntity.status(HttpStatus.OK).body(tokens);
     }
 
 
+
+    @PostMapping("/refresh")
+    @Operation(
+            summary = "Refresh access token",
+            description = "Exchanges a valid refresh token (from the HttpOnly refreshToken cookie " +
+                    "or the Authorization header) for a new access token and rotates the refresh token."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "New access and refresh tokens generated",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = LoginResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Refresh token missing, invalid, or expired",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = BadRequestResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Profile for token no longer exists",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = NotFoundResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Server error",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ServerErrorResponse.class)
+                    )
+            )
+    })
+    public ResponseEntity<LoginResponse> refreshToken(
+            @CookieValue(name = "refreshToken", required = false) String cookieToken,
+            @RequestHeader(name = "Authorization", required = false) String authHeader
+    ){
+        // Prefer the HttpOnly cookie; fall back to a Bearer token in the Authorization header.
+        String refreshToken = cookieToken;
+        if((refreshToken == null || refreshToken.isBlank())
+                && authHeader != null && authHeader.startsWith("Bearer ")){
+            refreshToken = authHeader.substring("Bearer ".length());
+        }
+
+        LoginResponse tokens = this.profileService.refreshAccessToken(refreshToken, this.response);
+        return ResponseEntity.status(HttpStatus.OK).body(tokens);
+    }
 
 
 }

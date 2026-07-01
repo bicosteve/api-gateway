@@ -9,6 +9,7 @@ import com.bicosteve.api_gateway.dto.response.ProfileResponse;
 import com.bicosteve.api_gateway.dto.response.RegisterResponse;
 import com.bicosteve.api_gateway.dto.response.VerificationResponse;
 import com.bicosteve.api_gateway.exceptions.InvalidOtpException;
+import com.bicosteve.api_gateway.exceptions.InvalidTokenException;
 import com.bicosteve.api_gateway.exceptions.PhoneNumberExistsException;
 import com.bicosteve.api_gateway.exceptions.PhoneNumberNotFoundException;
 import com.bicosteve.api_gateway.exceptions.ProfileNotFoundException;
@@ -159,17 +160,58 @@ public class ProfileService {
         String refreshToken = this.jwtService.generateRefreshToken(profile);
 
         // 04. Store refresh token in HttpOnly cookie
-        Cookie cookie = new Cookie("refreshToken", refreshToken);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/aut/refresh");
-        cookie.setMaxAge(this.jwtConfig.getRefreshTokenExpiration());
-        cookie.setSecure(false); // TODO -> Set to true in prod
-        response.addCookie(cookie);
+        this.attachRefreshCookie(response, refreshToken);
 
         return LoginResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken).build();
 
+    }
+
+    /*
+     * @refreshAccessToken
+     * Exchanges a valid refresh token for a new access token and rotates the refresh token.
+     * @param refreshToken the raw JWT refresh token (from the HttpOnly cookie or Authorization header)
+     * @param HttpServletResponse used to set the rotated refresh-token cookie
+     * */
+    public LoginResponse refreshAccessToken(String refreshToken, HttpServletResponse response){
+        // 01. Reject a missing token
+        if(refreshToken == null || refreshToken.isBlank()){
+            throw new InvalidTokenException("Refresh token is missing");
+        }
+
+        // 02. Reject an invalid or expired token
+        if(!this.jwtService.validateToken(refreshToken)){
+            throw new InvalidTokenException("Refresh token is invalid or has expired");
+        }
+
+        // 03. Resolve the owning profile from the token claims
+        String phoneNumber = this.jwtService.getPhoneNumberFromToken(refreshToken);
+        Profile profile = this.profileRepository.findByPhoneNumber(phoneNumber)
+                .orElseThrow(() -> new PhoneNumberNotFoundException(phoneNumber));
+
+        // 04. Issue a new access token and rotate the refresh token
+        String newAccessToken = this.jwtService.generateAccessToken(profile);
+        String newRefreshToken = this.jwtService.generateRefreshToken(profile);
+
+        // 05. Replace the refresh-token cookie with the rotated value
+        this.attachRefreshCookie(response, newRefreshToken);
+
+        return LoginResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken).build();
+    }
+
+    /*
+     * Writes the refresh token into a hardened HttpOnly cookie scoped to the refresh endpoint.
+     * */
+    private void attachRefreshCookie(HttpServletResponse response, String refreshToken){
+        Cookie cookie = new Cookie("refreshToken", refreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/api/auth/refresh");
+        cookie.setMaxAge(this.jwtConfig.getRefreshTokenExpiration());
+        cookie.setSecure(false); // TODO -> Set to true in prod
+        response.addCookie(cookie);
     }
 
 }

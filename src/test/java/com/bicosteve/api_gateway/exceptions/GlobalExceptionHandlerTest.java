@@ -100,12 +100,12 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleOtpExpiredReturns410() {
+    void handleOtpExpiredReturns400() {
         ResponseEntity<ErrorResponse> response =
-                handler.handlesInvalidOtp(new OtpExpiredException("expired"));
+                handler.handleExpiredOtp(new OtpExpiredException("expired"));
 
-        assertEquals(HttpStatus.GONE, response.getStatusCode());
-        assertEquals(410, response.getBody().getStatus());
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals(400, response.getBody().getStatus());
     }
 
     @Test
@@ -118,12 +118,36 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleGenericExceptionReturns500StatusCodeWith410BodyStatus() {
+    void handleGenericExceptionReturns500WithMatchingBodyStatusAndNoLeakedMessage() {
         ResponseEntity<ErrorResponse> response =
                 handler.handleGenericException(new RuntimeException("boom"));
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertEquals(HttpStatus.GONE.value(), response.getBody().getStatus());
+        // Body status must match the HTTP status (previously this leaked a mismatched 410)
+        assertEquals(500, response.getBody().getStatus());
+        // Internal exception message must not be exposed to clients
+        assertEquals("An unexpected error occurred", response.getBody().getMessage());
+    }
+
+    @Test
+    void handleInvalidTokenReturns401() {
+        ResponseEntity<ErrorResponse> response =
+                handler.handleInvalidToken(new InvalidTokenException("expired"));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals(401, response.getBody().getStatus());
+        assertEquals("expired", response.getBody().getMessage());
+    }
+
+    @Test
+    void handleBadCredentialsReturns401() {
+        ResponseEntity<ErrorResponse> response =
+                handler.handleBadCredentials(
+                        new org.springframework.security.authentication.BadCredentialsException("bad"));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals(401, response.getBody().getStatus());
+        assertEquals("Invalid phone number or password", response.getBody().getMessage());
     }
 
     @Test

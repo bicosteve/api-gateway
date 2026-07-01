@@ -13,7 +13,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -186,8 +185,6 @@ class AuthControllersTest {
                 verify(profileService, never()).createProfile(any());
             }
 
-            // TODO: RegisterRequest.email lacks @Email validation — add it to the DTO, then re-enable this test
-            @Disabled("RegisterRequest.email has no @Email annotation — fix DTO first")
             @Test
             @DisplayName("Should return 400 when email format is invalid")
             void invalidEmailFormat_returns400() throws Exception {
@@ -506,11 +503,10 @@ class AuthControllersTest {
             }
 
             @Test
-            @DisplayName("Should return 500 when password is wrong (BadCredentialsException)")
-            void wrongPassword_returns500() throws Exception {
-                // Arrange — BadCredentialsException is unchecked (unlike FailedLoginException),
-                // so Mockito can throw it. GlobalExceptionHandler has no specific handler for it,
-                // so it falls through to the generic Exception handler → 500.
+            @DisplayName("Should return 401 when password is wrong (BadCredentialsException)")
+            void wrongPassword_returns401() throws Exception {
+                // Arrange — BadCredentialsException now has a dedicated handler in
+                // GlobalExceptionHandler that maps it to 401 Unauthorized.
                 when(profileService.generateLoginToken(any(LoginRequest.class), any(HttpServletResponse.class)))
                         .thenThrow(new BadCredentialsException("Invalid credentials"));
 
@@ -520,7 +516,8 @@ class AuthControllersTest {
                         .content(objectMapper.writeValueAsString(validLoginRequest())));
 
                 // Assert
-                result.andExpect(status().isInternalServerError());
+                result.andExpect(status().isUnauthorized());
+                result.andExpect(jsonPath("$.message").value("Invalid phone number or password"));
 
                 // Verify
                 verify(profileService, times(1))
@@ -788,8 +785,8 @@ class AuthControllersTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validVerifyRequest())));
 
-                // Assert
-                result.andExpect(status().isGone());
+                // Assert — expired OTP is a client error; user must request a fresh code
+                result.andExpect(status().isBadRequest());
 
                 // Verify
                 verify(profileService, times(1)).verifyProfile(any(VerifyRequest.class));
@@ -832,6 +829,98 @@ class AuthControllersTest {
                 // Verify
                 verify(profileService, times(1)).verifyProfile(any(VerifyRequest.class));
             }
+        }
+    }
+
+
+    // ══════════════════════════════════════════════════════════════
+    // REFRESH — POST /api/auth/refresh
+    // ══════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("POST /api/auth/refresh")
+    class Refresh {
+
+        @Test
+        @DisplayName("Should return 200 with new tokens when refresh cookie is valid")
+        void validCookie_returns200() throws Exception {
+            when(profileService.refreshAccessToken(eq("refresh-token-456"), any(HttpServletResponse.class)))
+                    .thenReturn(validLoginResponse());
+
+            ResultActions result = mockMvc.perform(post("/api/auth/refresh")
+                    .cookie(new jakarta.servlet.http.Cookie("refreshToken", "refresh-token-456")));
+
+            result.andExpect(status().isOk());
+            result.andExpect(jsonPath("$.accessToken").value("access-token-123"));
+            result.andExpect(jsonPath("$.refreshToken").value("refresh-token-456"));
+
+            verify(profileService, times(1))
+                    .refreshAccessToken(eq("refresh-token-456"), any(HttpServletResponse.class));
+        }
+
+        @Test
+        @DisplayName("Should fall back to the Authorization header when no cookie is present")
+        void bearerHeaderFallback_returns200() throws Exception {
+            when(profileService.refreshAccessToken(eq("header-token"), any(HttpServletResponse.class)))
+                    .thenReturn(validLoginResponse());
+
+            ResultActions result = mockMvc.perform(post("/api/auth/refresh")
+                    .header("Authorization", "Bearer header-token"));
+
+            result.andExpect(status().isOk());
+            verify(profileService, times(1))
+                    .refreshAccessToken(eq("header-token"), any(HttpServletResponse.class));
+        }
+
+        @Test
+        @DisplayName("Should prefer the cookie over the Authorization header")
+        void cookiePreferredOverHeader_returns200() throws Exception {
+            when(profileService.refreshAccessToken(eq("cookie-token"), any(HttpServletResponse.class)))
+                    .thenReturn(validLoginResponse());
+
+            mockMvc.perform(post("/api/auth/refresh")
+                            .cookie(new jakarta.servlet.http.Cookie("refreshToken", "cookie-token"))
+                            .header("Authorization", "Bearer header-token"))
+                    .andExpect(status().isOk());
+
+            verify(profileService, times(1))
+                    .refreshAccessToken(eq("cookie-token"), any(HttpServletResponse.class));
+        }
+
+        @Test
+        @DisplayName("Should return 401 when refresh token is missing")
+        void missingToken_returns401() throws Exception {
+            when(profileService.refreshAccessToken(isNull(), any(HttpServletResponse.class)))
+                    .thenThrow(new InvalidTokenException("Refresh token is missing"));
+
+            ResultActions result = mockMvc.perform(post("/api/auth/refresh"));
+
+            result.andExpect(status().isUnauthorized());
+            result.andExpect(jsonPath("$.message").value("Refresh token is missing"));
+        }
+
+        @Test
+        @DisplayName("Should return 401 when refresh token is invalid or expired")
+        void invalidToken_returns401() throws Exception {
+            when(profileService.refreshAccessToken(eq("bad-token"), any(HttpServletResponse.class)))
+                    .thenThrow(new InvalidTokenException("Refresh token is invalid or has expired"));
+
+            ResultActions result = mockMvc.perform(post("/api/auth/refresh")
+                    .cookie(new jakarta.servlet.http.Cookie("refreshToken", "bad-token")));
+
+            result.andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("Should return 404 when the profile for the token no longer exists")
+        void profileGone_returns404() throws Exception {
+            when(profileService.refreshAccessToken(eq("orphan-token"), any(HttpServletResponse.class)))
+                    .thenThrow(new PhoneNumberNotFoundException("254701234567"));
+
+            ResultActions result = mockMvc.perform(post("/api/auth/refresh")
+                    .cookie(new jakarta.servlet.http.Cookie("refreshToken", "orphan-token")));
+
+            result.andExpect(status().isNotFound());
         }
     }
 }

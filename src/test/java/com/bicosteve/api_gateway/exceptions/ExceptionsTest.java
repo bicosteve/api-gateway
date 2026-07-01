@@ -58,6 +58,12 @@ class ExceptionsTest {
     }
 
     @Test
+    void invalidTokenException() {
+        InvalidTokenException ex = new InvalidTokenException("bad token");
+        assertEquals("bad token", ex.getMessage());
+    }
+
+    @Test
     void phoneNumberExistsException() {
         PhoneNumberExistsException ex = new PhoneNumberExistsException("254701234567");
         assertTrue(ex.getMessage().contains("254701234567"));
