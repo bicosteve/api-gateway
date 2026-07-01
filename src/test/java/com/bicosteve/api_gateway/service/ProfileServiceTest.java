@@ -8,6 +8,7 @@ import com.bicosteve.api_gateway.dto.response.ProfileResponse;
 import com.bicosteve.api_gateway.dto.response.RegisterResponse;
 import com.bicosteve.api_gateway.dto.response.VerificationResponse;
 import com.bicosteve.api_gateway.exceptions.InvalidOtpException;
+import com.bicosteve.api_gateway.exceptions.InvalidTokenException;
 import com.bicosteve.api_gateway.exceptions.PhoneNumberExistsException;
 import com.bicosteve.api_gateway.exceptions.PhoneNumberNotFoundException;
 import com.bicosteve.api_gateway.exceptions.ProfileNotFoundException;
@@ -182,5 +183,63 @@ class ProfileServiceTest {
 
         assertThrows(PhoneNumberNotFoundException.class,
                 () -> service.generateLoginToken(req, response));
+    }
+
+    @Test
+    void loginCookieIsScopedToRefreshEndpoint() {
+        LoginRequest req = new LoginRequest("254701234567", "pass1234");
+        when(profileRepository.findByPhoneNumber("254701234567")).thenReturn(Optional.of(sampleProfile()));
+        MockHttpServletResponse mockResponse = new MockHttpServletResponse();
+
+        service.generateLoginToken(req, mockResponse);
+
+        // Regression guard for the previous "/aut/refresh" typo
+        assertEquals("/api/auth/refresh", mockResponse.getCookies()[0].getPath());
+    }
+
+    @Test
+    void refreshAccessTokenIssuesNewTokensAndRotatesCookie() {
+        // Produce a genuine, valid refresh token for the sample profile
+        String refreshToken = jwtService.generateRefreshToken(sampleProfile());
+        when(profileRepository.findByPhoneNumber("254701234567")).thenReturn(Optional.of(sampleProfile()));
+        MockHttpServletResponse mockResponse = new MockHttpServletResponse();
+
+        LoginResponse response = service.refreshAccessToken(refreshToken, mockResponse);
+
+        assertNotNull(response.getAccessToken());
+        assertNotNull(response.getRefreshToken());
+        // A fresh refresh cookie is set (rotation)
+        assertEquals(1, mockResponse.getCookies().length);
+        assertEquals("refreshToken", mockResponse.getCookies()[0].getName());
+        assertEquals("/api/auth/refresh", mockResponse.getCookies()[0].getPath());
+        assertTrue(mockResponse.getCookies()[0].isHttpOnly());
+    }
+
+    @Test
+    void refreshAccessTokenThrowsWhenTokenMissing() {
+        MockHttpServletResponse mockResponse = new MockHttpServletResponse();
+
+        assertThrows(InvalidTokenException.class,
+                () -> service.refreshAccessToken(null, mockResponse));
+        assertThrows(InvalidTokenException.class,
+                () -> service.refreshAccessToken("   ", mockResponse));
+    }
+
+    @Test
+    void refreshAccessTokenThrowsWhenTokenInvalid() {
+        MockHttpServletResponse mockResponse = new MockHttpServletResponse();
+
+        assertThrows(InvalidTokenException.class,
+                () -> service.refreshAccessToken("not.a.jwt", mockResponse));
+    }
+
+    @Test
+    void refreshAccessTokenThrowsWhenProfileNoLongerExists() {
+        String refreshToken = jwtService.generateRefreshToken(sampleProfile());
+        when(profileRepository.findByPhoneNumber("254701234567")).thenReturn(Optional.empty());
+        MockHttpServletResponse mockResponse = new MockHttpServletResponse();
+
+        assertThrows(PhoneNumberNotFoundException.class,
+                () -> service.refreshAccessToken(refreshToken, mockResponse));
     }
 }
