@@ -19,7 +19,10 @@
 
 ## Problem
 
-In Kenya, the Government (GoK) raised the **minimum bet amount from 1 KES to 20 KES**. That 20x jump prices out a segment of players: people who *want* to place a bet but don't have the required cash on hand to meet the new minimum stake.
+In Kenya, the government raised the **minimum bet amount from 1 KES to 
+20 KES**. That 20x jump prices out a segment of players: people who *want* 
+to play but don't have the required cash on hand to meet the new minimum 
+stake.
 
 **This platform addresses that gap with a bonus-first onboarding model:**
 
@@ -33,19 +36,16 @@ The result: users who couldn't previously afford the raised minimum can still pa
 
 ## Live Demo
 
-> **Live API Docs (Swagger UI):** `https://<your-deployed-host>/swagger-ui.html`
->
-> _TODO: replace `<your-deployed-host>` with the deployed base URL. When running locally, the docs are available at [http://localhost:5001/swagger-ui.html](http://localhost:5001/swagger-ui.html)._
+> **Live API Docs :** `http://13.140.190.37/api-gateway/swagger-ui/index.html#/`
 
 ---
 
 ## Screenshots / Demo
 
-> _TODO: add real assets under `docs/screenshots/` and reference them below._
 
-| Swagger UI                                           | Bet Slip Flow |
-|------------------------------------------------------|---|
-| ![Swagger UI](./screenshots/api-gateway-swagger.png) | ![Bet flow](docs/screenshots/bet-flow.gif) |
+| Swagger UI                                           | Bet Slip Flow                                              |
+|------------------------------------------------------|------------------------------------------------------------|
+| ![Swagger UI](./screenshots/api-gateway-swagger.png) | ![Bet flow](./screenshots/api-gateway-swagger-betslip.png) |
 
 ---
 
