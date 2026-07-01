@@ -18,3 +18,5 @@ target
 Dockerfile.dev
 docker-compose*.yml
 README.md
+
+screenshots
