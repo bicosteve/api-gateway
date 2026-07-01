@@ -11,6 +11,12 @@ import java.util.Set;
 public class SlipValidator implements ConstraintValidator<UniqueSlip, BetRequest>{
     @Override
     public boolean isValid(BetRequest request, ConstraintValidatorContext context){
+        // Null/empty slips are handled by @NotNull/@Size on the field; skip here to avoid NPE
+        // and to let those dedicated constraints report the proper message.
+        if(request == null || request.getSlips() == null){
+            return true;
+        }
+
         Set<String> seen = new HashSet<>();
         for(SlipRequest slip : request.getSlips()){
             String key = slip.getEventId() + "-" + slip.getTeamId();
