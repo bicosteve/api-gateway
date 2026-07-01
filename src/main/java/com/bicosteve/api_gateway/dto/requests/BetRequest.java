@@ -4,8 +4,8 @@ import com.bicosteve.api_gateway.validation.UniqueSlip;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -27,9 +27,9 @@ public class BetRequest{
     private Long profileId;
 
     @NotNull(message = "Stake is required")
-    @DecimalMin(value="2.0", message = "Stake must be greater than 2.0")
+    @DecimalMin(value="20.0", message = "Stake must be at least 20.0")
     @JsonProperty("stake")
-    @Schema(example = "2.0")
+    @Schema(example = "200.0")
     private Double stake;
 
     @JsonIgnore
@@ -40,6 +40,8 @@ public class BetRequest{
     @Schema(example = "0")
     private Integer isBonus;
 
+    @NotNull(message = "selections are required")
+    @Valid
     @Size(min=1,max = 10, message = "selections must be between 1 and 10")
     @Schema(description = "List of bet selections, minimum 1 and maximum 10",
             minLength = 1,
@@ -47,28 +49,34 @@ public class BetRequest{
             example = """
             [
               {
-                "eventId": "2defa5f34847147c70718b2fc6d2fa9a",
-                "teamId": 11196,
-                "marketId": 1,
-                "marketName": "moneyline",
-                "odds": 3.50,
-                "specialBetValue": ""
+                "event_id": "2defa5f34847147c70718b2fc6d2fa9a",
+                                "sport_id": 19,
+                "team_id": 3916,
+                "market_id": 1,
+                "market_name": "moneyline",
+                "participant_name":"Bayern Munich",
+                "odds": 1.13,
+                "special_bet_value": ""
               },
               {
-                "eventId": "9c0dc8eb5c35ff4fe656d5013f27f4f6",
-                "teamId": 1234,
-                "marketId": 2,
-                "marketName": "handicap",
+                "event_id": "9c0dc8eb5c35ff4fe656d5013f27f4f6",
+                                "sport_id": 19,
+                "team_id": 1234,
+                "market_id": 2,
+                "market_name": "handicap",
+                "participant_name":"Bayern Munich",
                 "odds": 2.91,
-                "specialBetValue": "hcp=2.5"
+                "special_bet_value": "hcp=-2.5"
               },
               {
-                "eventId": "9c0dc8eb5c35ff4fe656d5013f27f4f9",
-                "teamId": 9,
-                "marketId": 3,
-                "marketName": "totals",
-                "odds": 1.91,
-                "specialBetValue": "totals=2.5"
+                "event_id": "9c0dc8eb5c35ff4fe656d5013f27f4f9",
+                                "sport_id": 19,
+                "team_id": 9,
+                "market_id": 3,
+                "market_name": "totals",
+                "participant_name":"Under",
+                "odds": 3.10,
+                "special_bet_value": "totals=2.5"
               }
             ]
             """)
