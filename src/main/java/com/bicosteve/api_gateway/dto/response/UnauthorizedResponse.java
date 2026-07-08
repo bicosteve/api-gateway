@@ -6,13 +6,13 @@ import lombok.Data;
 
 @Data
 @Builder
-@Schema(description = "Server error (500) — returned when an unexpected error occurs on the server")
-public class ServerErrorResponse {
+@Schema(description = "Unauthorized (401) — returned when the request lacks a valid access token or credentials")
+public class UnauthorizedResponse {
 
-    @Schema(description = "HTTP status code", example = "500")
+    @Schema(description = "HTTP status code", example = "401")
     private int status;
 
-    @Schema(description = "Generic error message (internal details are never exposed)", example = "An unexpected error occurred")
+    @Schema(description = "Human-readable error message", example = "Expired access token or refresh token is invalid")
     private String message;
 
     @Schema(description = "Timestamp of the error in dd-MM-yyyy HH:mm:ss format", example = "08-07-2026 01:18:29")

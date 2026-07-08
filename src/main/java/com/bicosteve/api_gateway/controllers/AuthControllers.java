@@ -93,6 +93,14 @@ public class AuthControllers {
                     )
             ),
             @ApiResponse(
+                    responseCode = "400",
+                    description = "Account verification failed",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = BadRequestResponse.class)
+                    )
+            ),
+            @ApiResponse(
                     responseCode = "401",
                     description = "Account verification failed",
                     content = @Content(
@@ -178,7 +186,15 @@ public class AuthControllers {
                     description = "New access and refresh tokens generated",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = LoginResponse.class)
+                    schema = @Schema(implementation = LoginResponse.class)
+            )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "A problem occurred while processing your request",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = BadRequestResponse.class)
                     )
             ),
             @ApiResponse(
@@ -189,6 +205,7 @@ public class AuthControllers {
                             schema = @Schema(implementation = BadRequestResponse.class)
                     )
             ),
+
             @ApiResponse(
                     responseCode = "404",
                     description = "Profile for token no longer exists",

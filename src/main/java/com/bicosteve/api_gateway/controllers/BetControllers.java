@@ -52,6 +52,13 @@ public class BetControllers{
                             schema = @Schema(implementation = BadRequestResponse.class)
                     )),
             @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized - missing, invalid, or expired access token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = UnauthorizedResponse.class)
+                    )),
+            @ApiResponse(
                     responseCode = "500",
                     description = "Server error",
                     content = @Content(
@@ -79,11 +86,26 @@ public class BetControllers{
                     description = "Get a single bet with its related slips",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = BetResponse.class)
+                    schema = @Schema(implementation = BetResponse.class)
+            )),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid bet id supplied",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = BadRequestResponse.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized - missing, invalid, or expired access token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = UnauthorizedResponse.class)
                     )),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Not found",
+                    description = "Bet not found",
+
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = NotFoundResponse.class)
@@ -111,7 +133,7 @@ public class BetControllers{
 
 
     @GetMapping("/all")
-    @Operation(summary = "Get Bets")
+    @Operation(summary = "Get all bets with filters")
     @ApiResponses(value={
             @ApiResponse(
                     responseCode = "200",
@@ -129,10 +151,10 @@ public class BetControllers{
                     )),
             @ApiResponse(
                     responseCode = "401",
-                    description = "Unauthorized - invalid or missing tokens",
+                    description = "Unauthorized - missing, invalid, or expired access token",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = BadRequestResponse.class)
+                            schema = @Schema(implementation = UnauthorizedResponse.class)
                     )),
             @ApiResponse(
                     responseCode = "500",
@@ -148,11 +170,12 @@ public class BetControllers{
                     description = "Filter bets by period",
                     example="day | week | month | all"
             )
-           @RequestParam(defaultValue = "all")
+            @RequestParam(defaultValue = "all")
             @Pattern(
-                    regexp="day|week|month|all",
-                    message = "Filter must be one of: day, week, month,all")
+                    regexp="(?i)^(day|week|month|all)$",
+                    message = "Filter must be one of: day, week, month, all")
             String filter,
+
 
             @Parameter(
                     description = "Page number starting from 0",

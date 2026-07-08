@@ -12,34 +12,65 @@ import static org.junit.jupiter.api.Assertions.*;
 class ResponseDtosTest {
 
     @Test
-    void badRequestResponseGettersAndSetters() {
-        BadRequestResponse r = new BadRequestResponse();
-        r.setMessage("Bad request");
-        assertEquals("Bad request", r.getMessage());
+    void badRequestResponseBuilder() {
+        BadRequestResponse r = BadRequestResponse.builder()
+                .status(400)
+                .message("Validation failed")
+                .timestamp("08-07-2026 01:18:29")
+                .validationErrors(java.util.Map.of("phoneNumber", "Phone number is required"))
+                .build();
+        assertEquals(400, r.getStatus());
+        assertEquals("Validation failed", r.getMessage());
+        assertEquals("08-07-2026 01:18:29", r.getTimestamp());
+        assertEquals("Phone number is required", r.getValidationErrors().get("phoneNumber"));
     }
 
     @Test
     void existsResponseBuilder() {
-        ExistsResponse r = ExistsResponse.builder().message("User exists").build();
-        assertEquals("User exists", r.getMessage());
+        ExistsResponse r = ExistsResponse.builder()
+                .status(409)
+                .message("The phone number 254701234567 already exists")
+                .timestamp("08-07-2026 01:18:29")
+                .build();
+        assertEquals(409, r.getStatus());
+        assertEquals("The phone number 254701234567 already exists", r.getMessage());
+        assertEquals("08-07-2026 01:18:29", r.getTimestamp());
     }
 
     @Test
     void notFoundResponseBuilder() {
         NotFoundResponse r = NotFoundResponse.builder()
-                .statusCode("404")
-                .message("Not found")
+                .status(404)
+                .message("Bet with bet id 1 not found")
+                .timestamp("08-07-2026 01:18:29")
                 .build();
-        assertEquals("404", r.getStatusCode());
-        assertEquals("Not found", r.getMessage());
+        assertEquals(404, r.getStatus());
+        assertEquals("Bet with bet id 1 not found", r.getMessage());
+        assertEquals("08-07-2026 01:18:29", r.getTimestamp());
     }
 
     @Test
     void serverErrorResponseBuilder() {
         ServerErrorResponse r = ServerErrorResponse.builder()
-                .message("Internal error")
+                .status(500)
+                .message("An unexpected error occurred")
+                .timestamp("08-07-2026 01:18:29")
                 .build();
-        assertEquals("Internal error", r.getMessage());
+        assertEquals(500, r.getStatus());
+        assertEquals("An unexpected error occurred", r.getMessage());
+        assertEquals("08-07-2026 01:18:29", r.getTimestamp());
+    }
+
+    @Test
+    void unauthorizedResponseBuilder() {
+        UnauthorizedResponse r = UnauthorizedResponse.builder()
+                .status(401)
+                .message("Refresh token is invalid or has expired")
+                .timestamp("08-07-2026 01:18:29")
+                .build();
+        assertEquals(401, r.getStatus());
+        assertEquals("Refresh token is invalid or has expired", r.getMessage());
+        assertEquals("08-07-2026 01:18:29", r.getTimestamp());
     }
 
     @Test

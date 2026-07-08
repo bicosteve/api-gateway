@@ -3,6 +3,7 @@ package com.bicosteve.api_gateway.controllers;
 import com.bicosteve.api_gateway.dto.response.BadRequestResponse;
 import com.bicosteve.api_gateway.dto.response.ProfileResponse;
 import com.bicosteve.api_gateway.dto.response.ServerErrorResponse;
+import com.bicosteve.api_gateway.dto.response.UnauthorizedResponse;
 import com.bicosteve.api_gateway.service.ProfileService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -48,6 +49,13 @@ public class ProfileController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = BadRequestResponse.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized - missing, invalid, or expired access token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = UnauthorizedResponse.class)
                     )),
             @ApiResponse(
                     responseCode = "500",
