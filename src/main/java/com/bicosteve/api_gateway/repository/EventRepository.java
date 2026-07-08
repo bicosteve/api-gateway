@@ -93,7 +93,7 @@ public class EventRepository{
                 ORDER BY e.event_date ASC, t.is_home DESC, m.market_type_id ASC
              """;
 
-        log.info("Fetching events with limit {}, offset {}", limit, offset);
+        log.info("Fetching events with limit {}, offset {}", limit-1, offset);
 
         return this.jdbcTemplate.query(
                 sql,
