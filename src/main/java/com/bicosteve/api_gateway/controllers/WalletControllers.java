@@ -5,6 +5,7 @@ import com.bicosteve.api_gateway.dto.requests.DepositRequest;
 import com.bicosteve.api_gateway.dto.response.BadRequestResponse;
 import com.bicosteve.api_gateway.dto.response.DepositResponse;
 import com.bicosteve.api_gateway.dto.response.ServerErrorResponse;
+import com.bicosteve.api_gateway.dto.response.UnauthorizedResponse;
 import com.bicosteve.api_gateway.payments.ChapaService;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,6 +52,13 @@ public class WalletControllers {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = BadRequestResponse.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized - missing, invalid, or expired access token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = UnauthorizedResponse.class)
                     )),
             @ApiResponse(
                     responseCode = "500",

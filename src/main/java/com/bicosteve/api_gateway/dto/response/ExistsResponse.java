@@ -5,9 +5,16 @@ import lombok.Builder;
 import lombok.Data;
 
 @Data
-@Schema(description = "Response for when user already exists")
 @Builder
+@Schema(description = "Conflict (409) — returned when a resource already exists, e.g. a duplicate phone number")
 public class ExistsResponse {
-    @Schema(example = "User already exists")
+
+    @Schema(description = "HTTP status code", example = "409")
+    private int status;
+
+    @Schema(description = "Human-readable error message", example = "The phone number 254701234567 already exists")
     private String message;
+
+    @Schema(description = "Timestamp of the error in dd-MM-yyyy HH:mm:ss format", example = "08-07-2026 01:18:29")
+    private String timestamp;
 }

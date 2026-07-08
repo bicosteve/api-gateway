@@ -39,7 +39,8 @@ public class EventControllers{
                     )
             ),
             @ApiResponse(
-                    responseCode = "401",
+                    responseCode = "400",
+                    description = "A problem occurred while processing your request",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = BadRequestResponse.class)
@@ -54,6 +55,7 @@ public class EventControllers{
             ),
     })
     public ResponseEntity<PageResponse<EventResponse>> showAllEvents(
+
             @RequestParam(defaultValue = "10") @Min(1) @Max(50) int limit,
             @RequestParam(defaultValue = "0") @Min(0) int offset){
 
@@ -73,8 +75,17 @@ public class EventControllers{
                     )
             ),
             @ApiResponse(
+                    responseCode = "400",
+                    description = "A problem occurred while processing your request",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = BadRequestResponse.class)
+                    )
+            ),
+            @ApiResponse(
                     responseCode = "404",
                     description = "Event not found",
+
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = NotFoundResponse.class)

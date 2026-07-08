@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -28,6 +29,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleProfileNotFound(
             ProfileNotFoundException ex
     ){
+        log.warn("Profile not found {}", ex.getMessage());
         // construct error message
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
@@ -44,6 +46,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handlePhoneNumberNotFound(
             PhoneNumberNotFoundException ex
     ){
+        log.warn("Phone number not found {}", ex.getMessage());
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
                 ex.getMessage(),
@@ -89,6 +92,49 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
+
+    // 400 - Method-level parameter validation errors
+    // (e.g. @RequestParam / @PathVariable constrained with @Min, @Max, @Pattern, etc.)
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ErrorResponse> handleHandlerMethodValidation(
+            HandlerMethodValidationException ex
+    ){
+        // 00. Initialize errors map
+        Map<String, String> errors = new HashMap<>();
+
+        // 01. Extract each failed parameter and its message defensively.
+        //     Parameter names can be null (when the code is compiled without the
+        //     "-parameters" flag) and a resolvable error's default message can be
+        //     null too, so we guard against both to avoid a secondary NPE that
+        //     would make this fall through to the generic 500 handler.
+        try {
+            ex.getParameterValidationResults().forEach(result -> {
+                String paramName = result.getMethodParameter().getParameterName();
+                if (paramName == null) {
+                    paramName = "param" + result.getMethodParameter().getParameterIndex();
+                }
+                String finalParamName = paramName;
+                result.getResolvableErrors().forEach(resolvable -> {
+                    String message = resolvable.getDefaultMessage();
+                    errors.put(finalParamName, message != null ? message : "Invalid value");
+                });
+            });
+        } catch (Exception parsingEx) {
+            log.warn("Could not fully parse handler method validation errors", parsingEx);
+        }
+
+        log.warn("Request parameter validation failed: {}", errors);
+
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message("Validation failed")
+                .timestamp(this.getCurrentTimestamp())
+                .validationErrors(errors)
+                .build();
+
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
 
     // 400 - Profile Creation Error
     @ExceptionHandler(ProfileCreationException.class)
@@ -153,6 +199,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleEventNotFound(
             EventNotFoundException ex
     ){
+        log.warn("Event not found {}", ex.getMessage());
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
                 ex.getMessage(),
@@ -254,7 +301,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BetNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleBetNotFound(BetNotFoundException ex){
-        log.error("Bet not found {}",ex.getMessage());
+        log.warn("Bet not found {}",ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.builder()

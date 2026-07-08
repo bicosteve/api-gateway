@@ -109,16 +109,23 @@ public class BetService{
         // STEP 03::Fetch size + 1 to detect hasNext
         List<Bet> bets = this.betRepository.fetchBets(profileId,filter,size+1,offset);
 
-        // STEP 04::Check if there is a next page
+        // STEP 04::Guard against a null result so we always return an empty list
+        if(bets == null){
+            bets = List.of();
+        }
+
+        // STEP 05::Check if there is a next page
         boolean hasNext = bets.size() > size;
 
-        // STEP 05::Trim back to requested size
+        // STEP 06::Trim back to requested size (empty bets -> empty data list)
         List<BetResponse> data = bets.stream()
                 .limit(size)
                 .map(this.betDtoMapper::toDto)
                 .toList();
 
-        // STEP 06::Build and return page response
+
+        // STEP 07::Build and return page response
+
         return PageResponse.<BetResponse>builder()
                 .data(data)
                 .page(page)
