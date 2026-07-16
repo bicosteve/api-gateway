@@ -69,6 +69,7 @@ services:
 
     networks:
       - api-gateway-net
+      - monitoring-net
 
 
 networks:
