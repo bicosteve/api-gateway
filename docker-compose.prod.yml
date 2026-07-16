@@ -41,6 +41,7 @@ services:
 
     networks:
       - api-gateway-net
+      - monitoring-net
 
   alloy:
     image: grafana/alloy:latest
@@ -75,3 +76,5 @@ services:
 networks:
   api-gateway-net:
     name: api-gateway-net
+  monitoring-net:
+    external: true
