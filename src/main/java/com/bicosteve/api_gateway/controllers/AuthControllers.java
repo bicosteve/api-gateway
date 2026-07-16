@@ -5,6 +5,8 @@ import com.bicosteve.api_gateway.dto.requests.RegisterRequest;
 import com.bicosteve.api_gateway.dto.requests.VerifyRequest;
 import com.bicosteve.api_gateway.dto.response.*;
 import com.bicosteve.api_gateway.service.ProfileService;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -28,6 +30,16 @@ import org.springframework.web.bind.annotation.*;
 public class AuthControllers {
     private final ProfileService profileService;
     private final HttpServletResponse response;
+
+
+//    private final Counter registers;
+//
+//    // Monitoring Example
+//    public AuthControllers(MeterRegistry registry) {
+//        this.registers = Counter.builder("auths_attempts_total")
+//                .description("Total registrations")
+//                .register(registry);
+//    }
 
 
     @PostMapping("/register")
