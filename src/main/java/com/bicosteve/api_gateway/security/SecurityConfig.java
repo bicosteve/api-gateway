@@ -1,6 +1,9 @@
 package com.bicosteve.api_gateway.security;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.actuate.autoconfigure.security.reactive.EndpointRequest;
+import org.springframework.boot.actuate.health.HealthEndpoint;
+import org.springframework.boot.actuate.metrics.export.prometheus.PrometheusScrapeEndpoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -49,7 +52,9 @@ public class SecurityConfig {
         http.sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth.
-                        requestMatchers(HttpMethod.POST,"/api/auth/register").permitAll()
+                        requestMatchers(String.valueOf(EndpointRequest.to(HealthEndpoint.class,
+                                PrometheusScrapeEndpoint.class))).permitAll() //prometheus data scrapper
+                        .requestMatchers(HttpMethod.POST,"/api/auth/register").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/auth/verify-account").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/auth/refresh").permitAll()
