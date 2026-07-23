@@ -4,7 +4,7 @@ spring:
   config:
     import: optional:file:.env[.properties]
 
-management:
-  metrics:
-    tags:
-      application: api-gateway
+event-cache:
+  enabled: ${EVENT_CACHE_ENABLED:true}
+  prefix: ${EVENT_CACHE_PREFIX:event-cache}
+  version: ${EVENT_CACHE_VERSION:v1}

@@ -21,11 +21,12 @@ spring:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
+      username: ${REDIS_USERNAME:}
       password: ${REDIS_PASSWORD:}
       database: ${REDIS_DATABASE:0}
       timeout: 5000ms
       ssl:
-        enabled: ${REDIS_SSL:true}    # TLS is required by Upstash (rediss:// protocol)
+        enabled: ${REDIS_SSL:true} # TLS is required by Upstash (rediss:// protocol)
 
   sql:
     init:
@@ -41,7 +42,7 @@ spring:
 server:
   port: ${APP_PORT:5001}
   shutdown: graceful
-  forward-headers-strategy: framework   # honor X-Forwarded-* behind ALB/Nginx
+  forward-headers-strategy: framework # honor X-Forwarded-* behind ALB/Nginx
   error:
     include-message: never
     include-stacktrace: never
