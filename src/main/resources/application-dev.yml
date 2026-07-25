@@ -8,40 +8,28 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: ${DB_DRIVER}
     hikari:
-      keepalive-time: 30_000 # keep connection alive by testing them every 30s
-      minimum-idle: 10 # ensure pool does not die when idle
+      keepalive-time: 30_000
+      minimum-idle: 10
 
   data:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
-
-#  h2:
-#    console:
-#      enabled: true
-#      path: /h2-console
-#      settings:
-#        web-allow-others: false
-#        trace: false
+      username: ${REDIS_USERNAME:}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      ssl:
+        enabled: ${REDIS_SSL:false}
 
   sql:
     init:
       mode: ${SQL_MODE}
-      schema-locations: classpath:schema.sql # runs 1st to create tables
-      # enums-locations: classpath:enums.sql # runs 2nd
-      # platform: h2
-
-#  jpa:
-#    database-platform: org.hibernate.dialect.H2Dialect
-#    hibernate:
-#      ddl-auto: none
-#    show-sql: true
+      schema-locations: classpath:schema.sql
 
   jwt:
     secret: ${JWT_SECRET}
     access-token-expiration: ${ACCESS_TOKEN_EXPIRATION}
     refresh-token-expiration: ${REFRESH_TOKEN_EXPIRATION}
-
 
 server:
   port: ${APP_PORT}
@@ -66,11 +54,4 @@ chapa:
   webhook-secret: ${CHAPA_WEBHOOK_SECRET}
   currency: ${CHAPA_CURRENCY}
   callback-url: ${CHAPA_CALLBACK_URL}
-  return-rul: ${CHAPA_RETURN_URL}
-
-
-
-
-
-
-
+  return-url: ${CHAPA_RETURN_URL}
