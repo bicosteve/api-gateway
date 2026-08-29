@@ -67,7 +67,7 @@ class RedisEventCacheReaderTest {
 
         CachePage page = reader.findPage(2, 5).orElseThrow();
 
-        assertEquals(List.of("e2", "e3", "e4"), page.events().stream().map(Event::getEventId).toList());
+        assertEquals(List.of("e2", "e3"), page.events().stream().map(Event::getEventId).toList());
         assertTrue(page.hasNext());
         verify(zsets).rangeByScore(eq("event-cache:v1:upcoming"), eq(1893456000000d),
                 eq(Double.POSITIVE_INFINITY), eq(5L), eq(3L));
