@@ -45,30 +45,46 @@ public class RedisEventCacheReader {
     }
 
     public Optional<CachePage> findPage(int limit, int offset) {
-        if (!properties.enabled()) return Optional.empty();
+        if (!properties.enabled()) {
+            return Optional.empty();
+        }
+
+
         try {
-            Set<String> ids = redis.opsForZSet().rangeByScore(properties.upcomingKey(), clock.millis(),
+
+            Set<String> ids = redis
+                    .opsForZSet()
+                    .rangeByScore(properties.upcomingKey(), clock.millis(),
                     Double.POSITIVE_INFINITY, offset, limit + 1L);
-            if (ids == null) return Optional.empty();
+
+            if (ids == null){
+                return Optional.empty();
+            }
+
             List<String> orderedIds = List.copyOf(ids);
-            List<String> jsons = redis.opsForValue().multiGet(orderedIds.stream().map(properties::eventKey).toList());
-            if (jsons == null || jsons.size() != orderedIds.size()) return Optional.empty();
+
+            List<String> jsons = redis
+                    .opsForValue()
+                    .multiGet(orderedIds.stream().map(properties::eventKey).toList());
+
+            if (jsons == null || jsons.size() != orderedIds.size()){
+                return Optional.empty();
+            }
+
             for (int index = 0; index < orderedIds.size(); index++) {
                 if (jsons.get(index) == null) {
                     repair(orderedIds.get(index));
                     return Optional.empty();
                 }
             }
+
             List<Event> events = jsons.stream().map(this::deserialize).toList();
-            for (int index = 0; index < events.size(); index++) {
-                Event event = events.get(index);
-                if (!orderedIds.get(index).equals(event.getEventId()) || event.getEventDate() == null
-                        || event.getEventDate().toInstant().toEpochMilli() <= clock.millis()) {
-                    repair(orderedIds.get(index));
-                    return Optional.empty();
-                }
-            }
-            return Optional.of(new CachePage(events, events.size() > limit));
+            boolean hasNext = events.size() > limit;
+
+            List<Event> page = hasNext ? events.subList(0, limit) : events;
+
+            return Optional.of(new CachePage(page, hasNext));
+
         } catch (RuntimeException e) {
             return Optional.empty();
         }
