@@ -26,6 +26,7 @@ public class EventDtoMapper{
         dto.setSeasonType(event.getSeasonType());
         dto.setSeasonYear(event.getSeasonYear());
         dto.setEventName(event.getEventName());
+        dto.setTournament(event.getTournament());
         dto.setEventStatus(event.getEventStatus());
 
 

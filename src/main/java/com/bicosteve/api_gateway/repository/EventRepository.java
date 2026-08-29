@@ -38,6 +38,7 @@ public class EventRepository{
                     e.season_year,
                     e.event_name,
                     e.event_status,
+                    e.tournament,
                     t.id AS teams_id,
                     t.team_id,
                     t.event_id AS teams_event_id,
@@ -120,6 +121,7 @@ public class EventRepository{
                     e.event_name,
                     e.event_headline,
                     e.event_status,
+                    e.tournament,
                     t.id AS teams_id,
                     t.team_id,
                     t.event_id AS teams_event_id,
@@ -192,6 +194,7 @@ public class EventRepository{
                 Integer seasonYear = rs.getInt("season_year");
                 String eventName = rs.getString("event_name");
                 Integer eventStatus = rs.getInt("event_status");
+                String tournament = rs.getString("tournament");
 
                 Event event = eventMap.computeIfAbsent(id,key -> {
                     Event e = new Event();
@@ -203,6 +206,7 @@ public class EventRepository{
                     e.setSeasonType(seasonType);
                     e.setSeasonYear(seasonYear);
                     e.setEventName(eventName);
+                    e.setTournament(tournament);
                     e.setEventStatus(eventStatus);
 
                     e.setTeams(new ArrayList<>());
@@ -250,11 +254,9 @@ public class EventRepository{
 
                     // Getting prices
                     Integer priceId = rs.getInt("price_id");
-                    Integer priceRundownId = rs.getInt("price_rundown_id");
                     BigDecimal price = rs.getBigDecimal("price");
                     Integer isMainLine = rs.getInt("is_main_line");
                     BigDecimal priceOdd = rs.getBigDecimal("odds");
-                    Integer priceParticipantId = rs.getInt("price_participant_id");
                     String handicapValue = rs.getString("handicap_value");
                     String lineId = rs.getString("price_line_id");
                     java.sql.Timestamp priceTimestamp = rs.getTimestamp("price_closed_at");
