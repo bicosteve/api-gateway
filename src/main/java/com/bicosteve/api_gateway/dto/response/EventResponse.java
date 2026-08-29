@@ -36,6 +36,9 @@ public class EventResponse {
     @Schema(example = "0")
     private Integer                     eventStatus;
 
+    @Schema(example = "La Liga")
+    private String                      tournament;
+
     private List<TeamResponse>   teams =     new ArrayList<>();
     private List<MarketResponse> markets =   new ArrayList<>();
     private ScoreResponse score;

@@ -26,6 +26,7 @@ public class Event{
     private String          eventName;
     private String          eventHeadline;
     private Integer         eventStatus;
+    private String          tournament;
     private LocalDateTime   createdAt;
     private LocalDateTime   updateAt;
 
