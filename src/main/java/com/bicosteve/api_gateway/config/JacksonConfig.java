@@ -35,7 +35,7 @@ public class JacksonConfig {
 
         // Ensure timezone information is preserved from the OffsetDateTime
         mapper.disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
-
+        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
         return mapper;
     }
