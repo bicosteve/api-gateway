@@ -19,7 +19,7 @@ spring:
       password: ${REDIS_PASSWORD:}
       database: ${REDIS_DATABASE:0}
       ssl:
-        enabled: ${REDIS_SSL:false}
+        enabled: ${REDIS_SSL_ENABLED:false}
 
   sql:
     init:
