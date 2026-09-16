@@ -16,7 +16,7 @@ public class LoginRequest {
 
     @Schema(example = "2547012345678")
     @NotBlank(message = "Phone number is required")
-    @Size(max = 12, message = "Phone number must be exactly 12 characters")
+    @Size(min=10, max = 12, message = "Phone number must be between 10 and 12 characters")
     @ValidPhoneNumber
     @JsonProperty("phone_number")
     private String phoneNumber;

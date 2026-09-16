@@ -11,13 +11,12 @@ public class PhoneNumberValidator implements ConstraintValidator<ValidPhoneNumbe
         }
 
         String cleanedValue = value.replaceAll("[\\s-]","");
-        boolean isValid = cleanedValue
-                .matches("^(07|01)\\d{8}") || cleanedValue.matches("^(\\+?254)(7|1)\\d{8}$");
+        boolean isValid = cleanedValue.matches("^(01|07)\\d{8}$|^\\+?254(1|7)\\d{8}$");
 
         if(!isValid){
             context.disableDefaultConstraintViolation();
             context.
-                    buildConstraintViolationWithTemplate("Phone number must be valid Kenyan number eg 0712345678 or +254712345678")
+                    buildConstraintViolationWithTemplate("Phone number must be valid Kenyan number e.g 0712345678 or +254712345678")
                     .addPropertyNode(("phoneNumber"))
                     .addConstraintViolation();
         }
