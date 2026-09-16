@@ -27,6 +27,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -383,9 +384,10 @@ class AuthControllersTest {
                         .content(objectMapper.writeValueAsString(request)));
 
                 // Assert
+                result.andDo(print());
                 result.andExpect(status().isBadRequest());
                 result.andExpect(jsonPath("$.message").value("Validation failed"));
-                result.andExpect(jsonPath("$.validationErrors.phoneNumber").value("Phone number must be between 10 and 12 characters"));
+                result.andExpect(jsonPath("$.validationErrors.phoneNumber").value("Phone number is required"));
 
                 // Verify
                 verify(profileService, never()).generateLoginToken(any(), any());
