@@ -385,7 +385,7 @@ class AuthControllersTest {
                 // Assert
                 result.andExpect(status().isBadRequest());
                 result.andExpect(jsonPath("$.message").value("Validation failed"));
-                result.andExpect(jsonPath("$.validationErrors.phoneNumber").value("Phone number is required"));
+                result.andExpect(jsonPath("$.validationErrors.phoneNumber").value("Phone number must be between 10 and 12 characters"));
 
                 // Verify
                 verify(profileService, never()).generateLoginToken(any(), any());
