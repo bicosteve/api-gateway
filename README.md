@@ -12,46 +12,20 @@
 </p>
 
 <p align="center">
-  A production-grade RESTful API backend for a sports betting platform, built with <strong>Spring Boot 3.5</strong> and <strong>Java 21</strong>. It serves as the central API gateway handling user authentication, sports event management, bet placement with odds computation, wallet operations, and payment processing via <a href="https://chapa.co/">Chapa</a>.
+  A production-grade Spring Boot API backend for a sports betting 
+platform, built with <strong>Spring Boot 3.5</strong> and <strong>Java 
+21</strong>. It serves as the gateway for handling user authentication, sports 
+events listing, bet placement with odds computation, wallet operations, 
+and payment processing via <a href="https://chapa.co/">Chapa</a>.
 </p>
-
----
-
-## Problem
-
-In Kenya, the government raised the **minimum bet amount from 1 KES to 
-20 KES**. That 20x jump prices out a segment of players: people who *want* 
-to play but don't have the required cash on hand to meet the new minimum 
-stake.
-
-**This platform addresses that gap with a bonus-first onboarding model:**
-
-- Every newly **verified account is awarded a welcome freebet** (bonus balance) at signup.
-- Bets can be placed using either **real balance or bonus balance** (`is_bonus` flag on every bet), so a cash-short user can still meet the 20 KES minimum stake using their bonus.
-- The **wallet tracks `balance` and `bonus` separately**, letting the platform seed promotional funds without touching real money and giving new users a frictionless path to their first bet.
-
-The result: users who couldn't previously afford the raised minimum can still participate, and the platform has a built-in acquisition mechanism aligned with the regulatory change.
-
----
-
-## Live Demo
-
-> **Live API Docs :** `http://13.140.190.37/api-gateway/swagger-ui/index.html#/`
-
----
-
-## Screenshots / Demo
-
-
-| Swagger UI                                           | Bet Slip Flow                                              |
-|------------------------------------------------------|------------------------------------------------------------|
-| ![Swagger UI](./screenshots/api-gateway-swagger.png) | ![Bet flow](./screenshots/api-gateway-swagger-betslip.png) |
 
 ---
 
 ## Table of Contents
 
 - [Problem](#problem)
+- [Live Demo](#live-demo)
+- [Platform Screenshots](#platform-screenshots)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Architecture Overview](#architecture-overview)
@@ -66,6 +40,53 @@ The result: users who couldn't previously afford the raised minimum can still pa
 - [Author](#author)
 
 ---
+
+## Problem
+
+Most people enjoy betting as a sports and sometimes they do not have money 
+to spend on since almost all bookmakers require someone to pay to use their 
+platform to make bets. In addition, the government of Kenya have had 
+proposal to raise the **minimum bet amount from 1 KES to 20 KES**. That is 20x 
+jump prices out a segment of players: people who *want* 
+to play but don't have the required cash on hand to meet the new minimum 
+stake.
+
+**This platform addresses that gap with a bonus-first onboarding model:**
+
+- Every newly **verified account is awarded a welcome to play for free**.
+- Bets can be just ge placed without any amount just for enjoyment. 
+
+The result: users who couldn't previously afford the raised minimum can 
+still participate and enjoy the thrill of creating bets.
+
+---
+
+## Live Demo
+
+> **[Platform Live Demo](https://youtu.be/46A08UC7L4M)**
+
+> **[Live API Docs](https://api.bixx.co.ke/api-gateway/swagger-ui/index.html#/)**
+
+> **[Live UI](https://sportbook.bixx.co.ke/)**
+
+
+---
+
+## Platform Screenshots
+
+
+| Swagger UI                                           |                                             |
+|------------------------------------------------------|------------------------------------------------------------|
+| ![Swagger UI](./screenshots/api-gateway-swagger.png) | ![Bet flow](./screenshots/api-gateway-swagger-betslip.png) |
+
+
+| Web UI                                               |                                              |
+|------------------------------------------------------|------------------------------------------------------------|
+| ![Register](./screenshots/register_page.png)         | ![Login](./screenshots/login.png)                          |
+| ![Lobby](./screenshots/lobby.png)                    | ![My Bets](./screenshots/my_bets.png)                      |
+
+---
+
 
 ## Features
 
