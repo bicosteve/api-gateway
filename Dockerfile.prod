@@ -1,0 +1,19 @@
+# syntax=docker/dockerfile:1
+
+# Fast production image packaging pre-built, tested JAR from CI pipeline
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /app
+
+RUN apk add --no-cache curl \
+    && addgroup -S usr \
+    && adduser -S usr -G usr
+
+# Expects pre-built and verified JAR inside target/
+COPY target/*.jar /app/app.jar
+
+USER usr:usr
+
+EXPOSE 5001
+
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

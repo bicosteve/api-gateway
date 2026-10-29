@@ -6,23 +6,27 @@ import com.bicosteve.api_gateway.dto.response.BetResponse;
 import com.bicosteve.api_gateway.dto.response.PageResponse;
 import com.bicosteve.api_gateway.exceptions.BetNotFoundException;
 import com.bicosteve.api_gateway.exceptions.ExpiredEventException;
-import com.bicosteve.api_gateway.exceptions.IllegalArgumentException;
+import com.bicosteve.api_gateway.exceptions.InvalidBetException;
 import com.bicosteve.api_gateway.mappers.dtomappers.BetDtoMapper;
 import com.bicosteve.api_gateway.models.Bet;
 import com.bicosteve.api_gateway.models.Event;
 import com.bicosteve.api_gateway.repository.BetRepository;
 import com.bicosteve.api_gateway.repository.EventRepository;
+import com.bicosteve.api_gateway.repository.WalletRepository;
 import com.bicosteve.api_gateway.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,8 +35,10 @@ public class BetService{
     private final BetRepository betRepository;
     private final BetDtoMapper betDtoMapper;
     private final EventRepository eventRepository;
+    private final WalletRepository walletRepository;
 
 
+    @Transactional
     public BetResponse placeBet(BetRequest request, Authentication authentication){
         // 01. Get profileId from the Authenticated user
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
@@ -43,7 +49,7 @@ public class BetService{
         // 02. Check for duplicate eventId
         if(request.hasDuplicateEvent()){
             log.warn("Bet request has duplicate eventId");
-            throw new IllegalArgumentException("Cannot have duplicate eventId on a bet");
+            throw new InvalidBetException("Cannot have duplicate eventId on a bet");
         }
 
         // 03. Check if the eventDate is still valid
@@ -60,7 +66,7 @@ public class BetService{
         // 06. Make sure total odds is not less than 1.20
         if(request.getTotalOdds() == null || request.getTotalOdds().compareTo(new BigDecimal("1.2")) < 0){
             log.warn("Total odds must be greater than 1.2");
-            throw new IllegalArgumentException("Total odds must be greater than 1.2");
+            throw new InvalidBetException("Total odds must be greater than 1.2");
         }
 
         // 07. Calculate the possible win
@@ -74,14 +80,25 @@ public class BetService{
                     request.getProfileId(),
                     possibleWin
             );
-            throw new IllegalArgumentException("Possible win must be % and above ".formatted(1.0));
+            throw new InvalidBetException("Possible win must be % and above ".formatted(1.0));
         }
 
-        // 09. Try inserting bet on the bets & bet_slips table
+        // 09. Debit user wallet or bonus balance
+        boolean isBonus = request.getIsBonus() != null && request.getIsBonus() == 1;
+        boolean debited = isBonus
+                ? this.walletRepository.debitBonusBalance(profileId, stake)
+                : this.walletRepository.debitWalletBalance(profileId, stake);
+
+        if(!debited){
+            log.warn("Profile {} placing bet. Insufficient wallet/bonus balance for stake {}", profileId, stake);
+            throw new InvalidBetException("Insufficient wallet balance to place bet");
+        }
+
+        // 10. Try inserting bet on the bets & bet_slips table
         Long betId = this.betRepository.addBet(request,possibleWin.doubleValue());
         if(betId == null || betId < 1){
             log.warn("Profile {} placing bet. Bet did not go through", request.getProfileId());
-            throw new IllegalArgumentException("Bet placement failed");
+            throw new InvalidBetException("Bet placement failed");
         }
 
         Bet bet = new Bet();
@@ -151,12 +168,25 @@ public class BetService{
     }
 
     private void validateBetSlip(List<SlipRequest> slips){
+        if (slips == null || slips.isEmpty()) {
+            return;
+        }
         OffsetDateTime utcTimeNow = OffsetDateTime.now(Clock.systemUTC());
+        List<String> eventIds = slips.stream()
+                .map(SlipRequest::getEventId)
+                .distinct()
+                .toList();
+
+        List<Event> events = this.eventRepository.fetchEventsByIds(eventIds);
+        Map<String, Event> eventMap = events.stream()
+                .filter(e -> e.getEventId() != null)
+                .collect(Collectors.toMap(Event::getEventId, e -> e, (e1, e2) -> e1));
+
         for(SlipRequest slip : slips){
-            Event event = this.eventRepository.fetchOneEvent(slip.getEventId());
+            Event event = eventMap.get(slip.getEventId());
             if(event == null){
                 log.warn("Event with id {} not found", slip.getEventId());
-                throw new IllegalArgumentException("Event with id=%s does not exist"
+                throw new InvalidBetException("Event with id=%s does not exist"
                         .formatted(slip.getEventId()));
             }
 

@@ -151,6 +151,16 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void handleInvalidBetExceptionReturns400() {
+        ResponseEntity<ErrorResponse> response =
+                handler.handleInvalidBetException(new InvalidBetException("bad bet"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals(400, response.getBody().getStatus());
+        assertEquals("bad bet", response.getBody().getMessage());
+    }
+
+    @Test
     void handleIllegalExceptionReturns400() {
         ResponseEntity<ErrorResponse> response =
                 handler.handleIllegalException(new IllegalArgumentException("bad"));

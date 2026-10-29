@@ -72,6 +72,35 @@ public class WalletRepository {
         return this.updateWalletBalance(query, amount, profileId, amount);
     }
 
+    /**
+     * Debits a user's bonus balance. The WHERE clause prevents the bonus balance from
+     * becoming negative when placing a bonus bet.
+     * @param profileId the profile that owns the wallet
+     * @param amount amount to subtract from the bonus balance
+     * @return true when exactly one wallets row was updated
+     */
+    public boolean debitBonusBalance(Long profileId, BigDecimal amount) {
+        this.validateAmount(amount);
+
+        Wallet wallet = this.checkAccountBalance(profileId);
+        if(wallet == null || wallet.getBonus() == null || wallet.getBonus().compareTo(amount) < 0) {
+            return false;
+        }
+
+        String query = """
+                UPDATE
+                    wallets
+                SET
+                    bonus = bonus - ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE
+                    profile_id = ?
+                    AND bonus >= ?
+                """;
+
+        return this.updateWalletBalance(query, amount, profileId, amount);
+    }
+
     private boolean updateWalletBalance(String query, Object... args) {
         try {
             int affectedRows = this.jdbcTemplate.update(query, args);
