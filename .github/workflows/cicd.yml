@@ -100,7 +100,6 @@ jobs:
           set -o pipefail
           echo "==== Running Tests ===="
           mvn clean test \
-            -Dmaven.test.failure.ignore=true \
             -B \
             --file pom.xml \
             2>&1 | tee test-output.log
@@ -181,51 +180,58 @@ jobs:
           TOTAL_ERRORS=0
           TOTAL_SKIPPED=0
 
-          for xml in "$REPORTS_DIR"/TEST-*.xml; do
-            [ -f "$xml" ] || continue
-            TESTS=$(awk -F'tests="' '/tests="/ {split($2,a,"\""); if (a[1] > 0) print a[1]}' "$xml" | awk '{sum+=$1} END {print sum+0}')
-            FAILURES=$(awk -F'failures="' '/failures="/ {split($2,a,"\""); if (a[1] ~ /^[0-9]+$/) sum+=a[1]} END {print sum+0}' "$xml")
-            ERRORS=$(awk -F'errors="' '/errors="/ {split($2,a,"\""); if (a[1] ~ /^[0-9]+$/) sum+=a[1]} END {print sum+0}' "$xml")
-            SKIPPED=$(awk -F'skipped="' '/skipped="/ {split($2,a,"\""); if (a[1] ~ /^[0-9]+$/) sum+=a[1]} END {print sum+0}' "$xml")
-          
-            TOTAL_TESTS=$((TOTAL_TESTS + TESTS))
-            TOTAL_FAILURES=$((TOTAL_FAILURES + FAILURES))
-            TOTAL_ERRORS=$((TOTAL_ERRORS + ERRORS))
-            TOTAL_SKIPPED=$((TOTAL_SKIPPED + SKIPPED))
-          done
+          # Use python's robust XML parser instead of brittle regex awk splitting
+          python3 - << 'EOF'
+          import glob
+          import sys
+          import xml.etree.ElementTree as ET
 
-          EFFECTIVE_TESTS=$((TOTAL_TESTS - TOTAL_SKIPPED))
+          reports = glob.glob("target/surefire-reports/TEST-*.xml")
+          if not reports:
+              print("::ERROR::No valid tests detected")
+              sys.exit(1)
 
-          if [ "$TOTAL_TESTS" -eq 0 ]; then
-            echo "::ERROR::No valid tests detected"
-            exit 1
-          fi
-          
-          if [ "$EFFECTIVE_TESTS" -eq 0 ]; then
-            echo "::ERROR::No executed tests detected. All tests were skipped."
-            exit 1
-          fi
+          total_tests = 0
+          total_failures = 0
+          total_errors = 0
+          total_skipped = 0
 
-          PASSED=$((EFFECTIVE_TESTS - TOTAL_FAILURES - TOTAL_ERRORS))
-          PASS_RATE=$((PASSED * 100 / EFFECTIVE_TESTS))
+          for r in reports:
+              try:
+                  tree = ET.parse(r)
+                  root = tree.getroot()
+                  total_tests += int(root.attrib.get('tests', 0))
+                  total_failures += int(root.attrib.get('failures', 0))
+                  total_errors += int(root.attrib.get('errors', 0))
+                  total_skipped += int(root.attrib.get('skipped', 0))
+              except Exception as e:
+                  print(f"Warn: could not parse {r}: {e}")
 
-          echo "────────────────────────────"
-          echo "Total Tests : $TOTAL_TESTS"
-          echo "Skipped : $TOTAL_SKIPPED"
-          echo "Executed : $EFFECTIVE_TESTS"
-          echo "Passed : $PASSED"
-          echo "Failures : $TOTAL_FAILURES"
-          echo "Errors : $TOTAL_ERRORS"
-          echo "Pass Rate : ${PASS_RATE}%"
-          echo "Required : ${MIN_PASS_RATE}%"
-          echo "────────────────────────────"
+          effective = total_tests - total_skipped
+          if effective <= 0:
+              print("::ERROR::No executed tests detected.")
+              sys.exit(1)
 
-          if [ "$PASS_RATE" -lt "$MIN_PASS_RATE" ]; then
-            echo "::ERROR::Below ${MIN_PASS_RATE}% threshold — pipeline failed"
-            exit 1
-          fi
+          passed = effective - total_failures - total_errors
+          pass_rate = int((passed * 100) / effective)
 
-          echo "Passed quality gate with ${PASS_RATE}%"
+          print("────────────────────────────")
+          print(f"Total Tests : {total_tests}")
+          print(f"Skipped     : {total_skipped}")
+          print(f"Executed    : {effective}")
+          print(f"Passed      : {passed}")
+          print(f"Failures    : {total_failures}")
+          print(f"Errors      : {total_errors}")
+          print(f"Pass Rate   : {pass_rate}%")
+          print(f"Required    : 100%")
+          print("────────────────────────────")
+
+          if pass_rate < 100 or total_failures > 0 or total_errors > 0:
+              print("::ERROR::Below 100% threshold — pipeline failed")
+              sys.exit(1)
+
+          print(f"Passed quality gate with {pass_rate}%")
+          EOF
 
   build:
     name: Build JAR Artifact
@@ -264,6 +270,7 @@ jobs:
           echo "==== Building JAR ===="
           mvn -B package -DskipTests --file pom.xml
           echo "==== Build complete ===="
+          ls -la target/*.jar
         env:
           # Use safe CI values. Build skips tests, so real external credentials should not be needed.
           APP_PORT: 8080
@@ -362,6 +369,16 @@ jobs:
           
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "Will deploy image tagged: $TAG"
+
+      - name: Verify image exists on Docker Hub
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          IMAGE="${{ env.DOCKER_IMAGE }}"
+          echo "Verifying image ${IMAGE}:${TAG} exists before deploying..."
+          docker pull "${IMAGE}:${TAG}" || {
+            echo "::ERROR::Image ${IMAGE}:${TAG} not found on Docker registry!"
+            exit 1
+          }
 
       - name: Ensure deployment directory exists
         uses: appleboy/ssh-action@v1.2.0

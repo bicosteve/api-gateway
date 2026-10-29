@@ -40,8 +40,8 @@ class ExceptionsTest {
     }
 
     @Test
-    void illegalArgumentException() {
-        IllegalArgumentException ex = new IllegalArgumentException("bad");
+    void invalidBetException() {
+        InvalidBetException ex = new InvalidBetException("bad");
         assertEquals("bad", ex.getMessage());
     }
 

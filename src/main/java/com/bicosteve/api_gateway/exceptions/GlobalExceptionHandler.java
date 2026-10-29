@@ -230,6 +230,20 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ExceptionHandler(InvalidBetException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidBetException(
+            InvalidBetException e
+    ){
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                e.getMessage(),
+                this.getCurrentTimestamp(),
+                null
+        );
+
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalException(
             IllegalArgumentException e

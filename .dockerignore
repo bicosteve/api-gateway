@@ -8,7 +8,8 @@
 logs
 *.log
 
-target
+target/*
+!target/*.jar
 .mvn/wrapper/maven-wrapper.jar
 
 .env

@@ -178,6 +178,22 @@ public class EventRepository{
         );
     }
 
+    public List<Event> fetchEventsByIds(List<String> eventIds) {
+        if (eventIds == null || eventIds.isEmpty()) {
+            return List.of();
+        }
+        String inClause = String.join(",", Collections.nCopies(eventIds.size(), "?"));
+        String sql = "SELECT event_id, event_date FROM rundown_event WHERE event_id IN (" + inClause + ")";
+        return this.jdbcTemplate.query(sql, (rs, rowNum) -> {
+            Timestamp ts = rs.getTimestamp("event_date");
+            OffsetDateTime dt = ts != null ? ts.toInstant().atOffset(ZoneOffset.UTC) : null;
+            return Event.builder()
+                    .eventId(rs.getString("event_id"))
+                    .eventDate(dt)
+                    .build();
+        }, eventIds.toArray());
+    }
+
     private static class EventExtractor implements ResultSetExtractor<List<Event>>{
         @Override
         public List<Event> extractData(ResultSet rs) throws SQLException{

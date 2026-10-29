@@ -2,7 +2,6 @@ package com.bicosteve.api_gateway.repository;
 
 import com.bicosteve.api_gateway.dto.requests.BetRequest;
 import com.bicosteve.api_gateway.dto.requests.SlipRequest;
-import com.bicosteve.api_gateway.exceptions.IllegalArgumentException;
 import com.bicosteve.api_gateway.mappers.rowmappers.BetResultSetExtractor;
 import com.bicosteve.api_gateway.mappers.rowmappers.BetRowMapper;
 import com.bicosteve.api_gateway.mappers.rowmappers.SlipRowMapper;
